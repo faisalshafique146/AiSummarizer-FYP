@@ -1,6 +1,6 @@
 # HiSumz AI
 
-HiSumz AI is a React application that summarizes pasted text with the Hugging Face Inference API. Email/password accounts and sessions are managed with Firebase Authentication.
+HiSumz AI is a TypeScript and React application that summarizes pasted text with the Hugging Face Inference API. Email/password accounts and sessions are managed with Firebase Authentication. Vite and Tailwind CSS provide the development and styling toolchain.
 
 ## Local setup
 
@@ -25,7 +25,8 @@ Vite exposes every `VITE_*` variable to browser code. Firebase web configuration
 ## Available commands
 
 - `npm run dev` starts Vite in development mode.
-- `npm run lint` checks the JavaScript and JSX source.
+- `npm run typecheck` runs the strict TypeScript project build without emitting files.
+- `npm run lint` runs type-aware ESLint checks over the TypeScript source.
 - `npm run build` creates the production bundle in `dist/`.
 - `npm run preview` serves the production bundle locally.
 

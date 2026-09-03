@@ -3,29 +3,35 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc -b --pretty false",
+    "lint": "eslint . --max-warnings 0",
+    "build": "npm run typecheck && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@material-tailwind/react": "^2.1.9",
-    "firebase": "^10.11.1",
-    "prop-types": "^15.8.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.23.0"
+    "firebase": "12.18.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router": "7.18.3"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.0.3",
-    "autoprefixer": "^10.4.15",
-    "eslint": "^8.45.0",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.3",
-    "postcss": "^8.4.29",
-    "tailwindcss": "^3.3.3",
-    "vite": "^4.4.5"
+    "@eslint/js": "10.0.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "26.4.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitejs/plugin-react": "6.1.1",
+    "eslint": "10.9.1",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.6",
+    "globals": "17.12.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0"
   }
 }

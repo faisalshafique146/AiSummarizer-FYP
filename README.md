@@ -1,61 +1,34 @@
-# AI Summarizer [🔗](https://ai-summarizer-olive.vercel.app/) 
+# HiSumz AI
 
-AI Summarizer is a web application built with React and Vite that uses natural language processing (NLP) techniques to generate summaries of text documents. It includes Redux Toolkit Query for API calls and a summarize history feature for up to 5 recent searches.
+HiSumz AI is a React application that summarizes pasted text with the Hugging Face Inference API. Email/password accounts and sessions are managed with Firebase Authentication.
 
-```markdown
-## Installation
+## Local setup
 
-To use AI Summarizer locally, follow these steps:
+Requirements: Node.js and npm.
 
-1. Clone the repository:
+1. Install the locked dependencies:
+
    ```bash
-   git clone https://github.com/ChandanSahu98/AiSummarizer.git
+   npm ci
    ```
 
-2. Navigate to the project directory:
-   ```bash
-   cd AiSummarizer
-   ```
+2. Copy `.env.example` to `.env.local` and replace every placeholder with the Firebase web-app configuration and a Hugging Face development token.
 
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+3. Start the development server:
 
-4. Start the development server:
    ```bash
    npm run dev
    ```
 
-## Usage
+Vite exposes every `VITE_*` variable to browser code. Firebase web configuration is public client metadata and must be protected with appropriate Firebase Authentication settings and API-key restrictions. A Hugging Face access token is different: it should be moved behind a server-side endpoint before production deployment.
 
-1. Provide the url of article that you want to summarize in the web interface.
-2. AI Summarizer will process the text and generate a summary for you.
-3. You can access the live version of AI Summarizer here: [AI Summarizer on Vercel](https://ai-summarizer-olive.vercel.app/)
-4. Remember to provide only article **url** otherwise it may not work.
+## Available commands
 
-## Features
+- `npm run dev` starts Vite in development mode.
+- `npm run lint` checks the JavaScript and JSX source.
+- `npm run build` creates the production bundle in `dist/`.
+- `npm run preview` serves the production bundle locally.
 
-- Summarize lengthy text documents quickly.
-- Customize the length of the summary.
-- User-friendly web interface built with React.
-- Fast development environment with Vite.
-- Utilizes advanced NLP techniques for accurate summarization.
-- **Redux Toolkit Query**: Seamless API data fetching and state management.
-- **Summarize History**: Keep track of up to 5 recent searches for easy reference.
+## Current application flow
 
-## Screenshot
-
-![image](https://github.com/ChandanSahu98/AiSummarizer/assets/52382395/46380b87-ecf1-4dc3-84bb-fe772dd9d49a)
-
-
-## Contributing
-
-If you'd like to contribute to AI Summarizer, please follow these steps:
-
-1. Fork the repository on GitHub.
-2. Clone your forked repository to your local machine.
-3. Create a new branch for your feature or bug fix: `git checkout -b feature-name`.
-4. Make your changes and commit them with descriptive commit messages.
-5. Push your changes to your fork on GitHub: `git push origin feature-name`.
-6. Open a pull request on the original repository, describing your changes.
+Unauthenticated visitors can sign up or sign in with email and password. After Firebase restores or creates a session, the text summarizer becomes available. The submitted text is sent to the `sshleifer/distilbart-cnn-12-6` model through Hugging Face, and the returned summary can be copied to the clipboard.

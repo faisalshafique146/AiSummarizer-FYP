@@ -1,7 +1,7 @@
 import { useState } from "react";
 import loader from "../assets/loader.svg";
 
-function App() {
+function Summarizer() {
   const [inputValue, setInputValue] = useState("");
   const [outputValue, setOutputValue] = useState("");
   const [isFetching, setIsFetching] = useState(false);
@@ -14,11 +14,10 @@ function App() {
     try {
       setIsFetching(true);
       const result = await query(inputValue);
-      console.log(result);
-      if (result) {
+      if (result?.[0]?.summary_text) {
         setOutputValue(result[0].summary_text);
       } else {
-        console.error("Result generated_text is undefined:", result);
+        throw new Error("The summarization service returned an unexpected response.");
       }
     } catch (error) {
       console.error("Failed to fetch result:", error);
@@ -43,27 +42,23 @@ function App() {
       );
     }
 
-    try {
-      const response = await fetch(
-        "https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6",
-        {
-          headers: {
-            Authorization: `Bearer ${huggingFaceToken}`,
-          },
-          method: "POST",
-          body: JSON.stringify({ inputs: data }),
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6",
+      {
+        headers: {
+          Authorization: `Bearer ${huggingFaceToken}`,
+          "Content-Type": "application/json",
         },
-      );
+        method: "POST",
+        body: JSON.stringify({ inputs: data }),
+      },
+    );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error during the API call:", error);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    return response.json();
   }
 
   return (
@@ -117,4 +112,4 @@ function App() {
   );
 }
 
-export default App;
+export default Summarizer;

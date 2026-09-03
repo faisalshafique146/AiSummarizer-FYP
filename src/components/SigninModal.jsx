@@ -1,7 +1,7 @@
-// SignupModal.js
-import React, { useState } from "react";
+import { useState } from "react";
+import PropTypes from "prop-types";
 import { auth } from "../firebase";
-import { signInWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import {
   Button,
   Dialog,
@@ -10,7 +10,6 @@ import {
   CardFooter,
   Typography,
   Input,
-  Checkbox,
 } from "@material-tailwind/react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -21,7 +20,7 @@ function SigninModal({ onClose }) {
     password: "",
   });
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const handleClose = () => (onClose ? onClose() : navigate("/"));
 
   const handleSubmit = () => {
     if (!values.email || !values.password) {
@@ -33,20 +32,16 @@ function SigninModal({ onClose }) {
       return;
     }
 
-    console.log(values);
     signInWithEmailAndPassword(auth, values.email, values.password)
-      .then((res) => {
-        setSuccess("Signed in successfully");
+      .then(() => {
         navigate("/");
       })
       .catch((err) => {
         if (err.code === "auth/user-disabled") {
           setError("Your account has been disabled. Please contact support.");
         } else {
-          console.log("Error:", err.code, err.message);
           setError(err.message);
         }
-        console.log("Error:", err.code, err.message);
       });
   };
 
@@ -54,7 +49,7 @@ function SigninModal({ onClose }) {
     <Dialog
       size="xs"
       open={true}
-      handler={onClose}
+      handler={handleClose}
       className="bg-transparent shadow-none"
     >
       <Card className="mx-auto w-full max-w-[24rem]">
@@ -74,6 +69,7 @@ function SigninModal({ onClose }) {
           </Typography>
           <Input
             label="Email"
+            type="email"
             size="lg"
             onChange={(event) =>
               setValues((prev) => ({ ...prev, email: event.target.value }))
@@ -84,38 +80,36 @@ function SigninModal({ onClose }) {
           </Typography>
           <Input
             label="Password"
+            type="password"
             size="lg"
             onChange={(event) =>
               setValues((prev) => ({ ...prev, password: event.target.value }))
             }
           />
-          <div className="-ml-2.5 -mt-3">
-            <Checkbox label="Remember Me" />
-          </div>
         </CardBody>
         <CardFooter className="pt-0">
           <div className=" text-red-900">{error}</div>
-          <div className=" text-green-900">{success}</div>
           <Button variant="gradient" onClick={handleSubmit} fullWidth>
             Sign In
           </Button>
           <Typography variant="small" className="mt-4 flex justify-center">
-            Don't have an account?
-            <Typography
-              as="a"
-              href="/"
-              variant="small"
-              color="blue-gray"
-              className="ml-1 font-bold"
-              onClick={onClose}
-            >
-              <Link to="/SignupModal">Sign up</Link>
-            </Typography>
+            Don&apos;t have an account?
+            <Link to="/SignupModal" className="ml-1 font-bold text-blue-gray-900">
+              Sign up
+            </Link>
           </Typography>
         </CardFooter>
       </Card>
     </Dialog>
   );
 }
+
+SigninModal.propTypes = {
+  onClose: PropTypes.func,
+};
+
+SigninModal.defaultProps = {
+  onClose: undefined,
+};
 
 export default SigninModal;

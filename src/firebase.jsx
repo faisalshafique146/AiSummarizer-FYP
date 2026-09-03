@@ -1,18 +1,24 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, signOut } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCCvSt5JwygvwIXXCRpDrV227AeYbNk8uU",
-  authDomain: "fir-auth-1132-c8e90.firebaseapp.com",
-  projectId: "fir-auth-1132-c8e90",
-  storageBucket: "fir-auth-1132-c8e90.appspot.com",
-  messagingSenderId: "1031736487663",
-  appId: "1:1031736487663:web:022799cc74139219a3f51a",
-  measurementId: "G-GXQ98SGN9R",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+const missingConfigKeys = Object.entries(firebaseConfig)
+  .filter(([, value]) => !value)
+  .map(([key]) => key);
+
+if (missingConfigKeys.length > 0) {
+  throw new Error(
+    `Missing Firebase environment variables for: ${missingConfigKeys.join(", ")}`,
+  );
+}
+
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-const auth = getAuth();
-
-export { app, auth, signOut };
+export { app, auth };

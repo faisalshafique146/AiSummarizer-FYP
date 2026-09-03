@@ -1,20 +1,8 @@
-// Hero.js
-import React, { useState } from "react";
-import { Link } from "react-router-dom"; 
+import PropTypes from "prop-types";
+import { Link } from "react-router-dom";
 import { logo } from "../assets";
-import SignupModal from "./SignupModal"; 
-import SigninModal from "./SigninModal"; 
 
-const Hero = (props,{ name, onLogout}) => {
-  const [showSignupModal, setShowSignupModal] = useState(false);
-  const [showSigninModal, setShowSigninModal] = useState(false);
-
-  const handleLogout = () => {
-    props.onLogout(); 
-    setShowSignupModal(false);
-    setShowSigninModal(false); 
-    props.name = null;
-  };
+const Hero = ({ name = "", onLogout }) => {
   return (
     <header className="w-full flex justify-center items-center flex-col">
       <nav className="flex items-center w-full mb-10 pt-3">
@@ -22,32 +10,19 @@ const Hero = (props,{ name, onLogout}) => {
 
         {!name && (
           <>
-        <button
-          type="button"
-          onClick={() => setShowSigninModal(true)}
-          className="black_btn ml-auto"
-        >
-          <Link to="/SigninModal" onClick={() => setShowSigninModal(true)}>{props.name ? `Welcome  - ${props.name}` : "Sign In"}</Link>
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowSignupModal(true)}
-          className="black_btn ml-2"
-        >
-          <Link to="/SignupModal" onClick={() => setShowSignupModal(true)}>Sign Up</Link>
-          </button>
+            <Link to="/SigninModal" className="black_btn ml-auto">
+              Sign In
+            </Link>
+            <Link to="/SignupModal" className="black_btn ml-2">
+              Sign Up
+            </Link>
           </>
         )}
-          {props.name && (
-      <button
-      type="button"
-      onClick={handleLogout}
-      className="black_btn ml-2"
-    >
-      Sign Out
-      </button>
-    )}
-        
+        {name && (
+          <button type="button" onClick={onLogout} className="black_btn ml-auto">
+            Sign Out
+          </button>
+        )}
       </nav>
 
       <h1 className="head_text">
@@ -59,10 +34,13 @@ const Hero = (props,{ name, onLogout}) => {
         that transforms lengthy articles into clear and concise summaries
       </h2>
 
-      {showSignupModal && <SignupModal onClose={() => setShowSignupModal(false)} />}
-      {showSigninModal && <SigninModal onClose={() => setShowSigninModal(false)} />}
     </header>
   );
+};
+
+Hero.propTypes = {
+  name: PropTypes.string,
+  onLogout: PropTypes.func.isRequired,
 };
 
 export default Hero;

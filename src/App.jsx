@@ -1,23 +1,21 @@
-// App.js
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
-import Demo from "./components/Demo";
 import Hero from "./components/Hero";
+import Summarizer from "./components/Summarizer";
 import SignupModal from "./components/SignupModal";
 import SigninModal from "./components/SigninModal";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
 
 const App = () => {
   const [userName, setUserName] = useState("");
-  const logout = () => {
-    setUserName(null);
-  };
+
+  const handleLogout = () => signOut(auth);
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        console.log(user);
-
         setUserName(user.displayName || user.email);
       } else {
         setUserName("");
@@ -40,9 +38,9 @@ const App = () => {
                   <div className="gradient" />
                 </div>
                 <div className="app">
-                  <Hero name={userName} onLogout={logout} />
+                  <Hero name={userName} onLogout={handleLogout} />
                   {userName ? (
-                    <Demo />
+                    <Summarizer />
                   ) : (
                     <p className="orange_gradient pt-9 text-5xl font-bold h-[600px]">
                       Please Sign in To Summarize

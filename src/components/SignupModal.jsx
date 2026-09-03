@@ -1,5 +1,5 @@
-// SignupModal.js
-import React, { useState } from "react";
+import { useState } from "react";
+import PropTypes from "prop-types";
 import { auth } from "../firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import {
@@ -11,8 +11,10 @@ import {
   Typography,
   Input,
 } from "@material-tailwind/react";
+import { useNavigate } from "react-router-dom";
 
-function SignupModal({ onClose}) {
+function SignupModal({ onClose }) {
+  const navigate = useNavigate();
   const [values, setValues] = useState({
     name: "",
     email: "",
@@ -20,7 +22,7 @@ function SignupModal({ onClose}) {
     repassword: "",
   });
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const handleClose = () => (onClose ? onClose() : navigate("/"));
 
   const handleSubmit = () => {
     if (
@@ -45,31 +47,24 @@ function SignupModal({ onClose}) {
       return;
     }
     setError("");
-    console.log(values);
-    
+
     createUserWithEmailAndPassword(auth, values.email, values.password)
       .then((res) => {
         const user = res.user;
-        console.log(user);
         updateProfile(user, {
           displayName: values.name,
         })
           .then(() => {
-            onClose();
+            handleClose();
           })
           .catch((error) => {
-            console.log("Error:", error.code, error.message);
             setError(error.message);
           });
-        if (user) {
-          setSuccess("User created successfully");
-        }
       })
       .catch((err) => {
         if (err.code === "auth/email-already-in-use") {
           setError("Email already exists. Please use a different email.");
         } else {
-          console.log("Error:", err.code, err.message);
           setError(err.message);
         }
       });
@@ -79,7 +74,7 @@ function SignupModal({ onClose}) {
     <Dialog
       size="xs"
       open={true}
-      handler={onClose}
+      handler={handleClose}
       className="bg-transparent shadow-none"
     >
       <Card className="mx-auto w-full max-w-[24rem]">
@@ -105,6 +100,7 @@ function SignupModal({ onClose}) {
           </Typography>
           <Input
             label="Email"
+            type="email"
             size="lg"
             onChange={(event) =>
               setValues((prev) => ({ ...prev, email: event.target.value }))
@@ -115,6 +111,7 @@ function SignupModal({ onClose}) {
           </Typography>
           <Input
             label="Password"
+            type="password"
             size="lg"
             onChange={(event) =>
               setValues((prev) => ({ ...prev, password: event.target.value }))
@@ -125,6 +122,7 @@ function SignupModal({ onClose}) {
           </Typography>
           <Input
             label="Password"
+            type="password"
             size="lg"
             onChange={(event) =>
               setValues((prev) => ({ ...prev, repassword: event.target.value }))
@@ -133,14 +131,21 @@ function SignupModal({ onClose}) {
         </CardBody>
         <CardFooter className="pt-0">
           <div className=" text-red-900">{error}</div>
-          <div className=" text-green-900">{success}</div>
           <Button variant="gradient" onClick={handleSubmit} fullWidth>
-            Sign In
+            Sign Up
           </Button>
         </CardFooter>
       </Card>
     </Dialog>
   );
 }
+
+SignupModal.propTypes = {
+  onClose: PropTypes.func,
+};
+
+SignupModal.defaultProps = {
+  onClose: undefined,
+};
 
 export default SignupModal;

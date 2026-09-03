@@ -1,61 +1,47 @@
-import {
-  useState,
-  type ChangeEventHandler,
-  type SubmitEventHandler,
-} from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { SubmitEventHandler } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router";
 import { getAuthErrorMessage } from "./authErrors";
+import AuthField from "./AuthField";
 import AuthPageLayout from "./AuthPageLayout";
-import type { SignInCredentials } from "./types";
+import {
+  signInSchema,
+  type SignInFormValues,
+} from "./authSchemas";
 import { useAuth } from "./useAuth";
 
 function SignInPage() {
   const navigate = useNavigate();
   const { user, loading, signIn } = useAuth();
-  const [values, setValues] = useState<SignInCredentials>({
-    email: "",
-    password: "",
+  const {
+    clearErrors,
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+    setError,
+  } = useForm<SignInFormValues>({
+    defaultValues: { email: "", password: "" },
+    mode: "onTouched",
+    resolver: zodResolver(signInSchema),
   });
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  const handleEmailChange: ChangeEventHandler<HTMLInputElement> = (event) => {
-    setValues((current) => ({ ...current, email: event.target.value }));
-  };
-
-  const handlePasswordChange: ChangeEventHandler<HTMLInputElement> = (
-    event,
-  ) => {
-    setValues((current) => ({ ...current, password: event.target.value }));
-  };
-
-  const submitCredentials = async (): Promise<void> => {
-    setError("");
-
-    if (!values.email || !values.password) {
-      setError("Please fill all the fields");
-      return;
-    }
-
-    if (!values.email.includes("@")) {
-      setError("Invalid Email");
-      return;
-    }
+  const submitCredentials: SubmitHandler<SignInFormValues> = async (values) => {
+    clearErrors("root");
 
     try {
-      setSubmitting(true);
       await signIn(values);
-      void navigate("/");
-    } catch (caughtError: unknown) {
-      setError(getAuthErrorMessage(caughtError));
-    } finally {
-      setSubmitting(false);
+      void navigate("/", { replace: true });
+    } catch (error: unknown) {
+      setError("root", {
+        message: getAuthErrorMessage(error),
+        type: "server",
+      });
     }
   };
 
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
-    void submitCredentials();
+  const handleFormSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
+    void handleSubmit(submitCredentials)(event);
   };
 
   if (loading) {
@@ -65,7 +51,7 @@ function SignInPage() {
         description="Please wait while HiSumz restores your account."
       >
         <p className="mt-6 text-sm text-gray-700" role="status">
-          Loading…
+          Loading&hellip;
         </p>
       </AuthPageLayout>
     );
@@ -78,40 +64,42 @@ function SignInPage() {
   return (
     <AuthPageLayout
       title="Sign In"
-      description="Enter your email and password to Sign In."
+      description="Enter your email and password to sign in."
     >
-      <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
-        <label className="flex flex-col gap-2 text-sm font-semibold text-gray-800">
-          Your Email
-          <input
-            autoComplete="email"
-            className="rounded-lg border border-gray-300 px-3 py-3 font-normal outline-none focus:border-gray-700"
-            onChange={handleEmailChange}
-            type="email"
-            value={values.email}
-          />
-        </label>
-        <label className="flex flex-col gap-2 text-sm font-semibold text-gray-800">
-          Your Password
-          <input
-            autoComplete="current-password"
-            className="rounded-lg border border-gray-300 px-3 py-3 font-normal outline-none focus:border-gray-700"
-            onChange={handlePasswordChange}
-            type="password"
-            value={values.password}
-          />
-        </label>
-        {error && (
+      <form
+        aria-busy={isSubmitting}
+        className="mt-6 flex flex-col gap-4"
+        noValidate
+        onSubmit={handleFormSubmit}
+      >
+        <AuthField
+          autoComplete="username"
+          autoFocus
+          error={errors.email?.message}
+          id="sign-in-email"
+          label="Email"
+          registration={register("email")}
+          type="email"
+        />
+        <AuthField
+          autoComplete="current-password"
+          error={errors.password?.message}
+          id="sign-in-password"
+          label="Password"
+          registration={register("password")}
+          type="password"
+        />
+        {errors.root?.message ? (
           <p className="text-sm text-red-800" role="alert">
-            {error}
+            {errors.root.message}
           </p>
-        )}
+        ) : null}
         <button
           className="rounded-lg bg-linear-to-r from-gray-900 to-gray-700 px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={submitting}
+          disabled={isSubmitting}
           type="submit"
         >
-          {submitting ? "Signing In…" : "Sign In"}
+          {isSubmitting ? "Signing In…" : "Sign In"}
         </button>
         <p className="text-center text-sm text-gray-700">
           Don&apos;t have an account?

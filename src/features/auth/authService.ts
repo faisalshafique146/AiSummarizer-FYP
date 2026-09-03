@@ -52,7 +52,7 @@ export async function signUpUser(details: SignUpDetails): Promise<void> {
     details.password,
   );
 
-  await updateProfile(credential.user, { displayName: details.name });
+  await updateProfile(credential.user, { displayName: details.displayName });
 }
 
 export async function signOutUser(): Promise<void> {

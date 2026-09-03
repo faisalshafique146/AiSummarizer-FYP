@@ -30,8 +30,7 @@ function AuthProvider({ children }: PropsWithChildren) {
           setUser(authenticatedUser);
           setLoading(false);
         },
-        (error) => {
-          console.error("Firebase auth subscription failed:", error);
+        () => {
           setUser(null);
           setLoading(false);
         },
@@ -39,37 +38,18 @@ function AuthProvider({ children }: PropsWithChildren) {
     [],
   );
 
-  const signIn = useCallback(
-    async (credentials: SignInCredentials): Promise<void> => {
-      setLoading(true);
-      try {
-        await signInUser(credentials);
-      } catch (error: unknown) {
-        setLoading(false);
-        throw error;
-      }
-    },
-    [],
-  );
+  const signIn = useCallback(async (
+    credentials: SignInCredentials,
+  ): Promise<void> => {
+    await signInUser(credentials);
+  }, []);
 
   const signUp = useCallback(async (details: SignUpDetails): Promise<void> => {
-    setLoading(true);
-    try {
-      await signUpUser(details);
-    } catch (error: unknown) {
-      setLoading(false);
-      throw error;
-    }
+    await signUpUser(details);
   }, []);
 
   const signOut = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    try {
-      await signOutUser();
-    } catch (error: unknown) {
-      setLoading(false);
-      throw error;
-    }
+    await signOutUser();
   }, []);
 
   const value = useMemo<AuthContextValue>(

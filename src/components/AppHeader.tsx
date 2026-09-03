@@ -1,15 +1,29 @@
-import type { MouseEventHandler } from "react";
+import { useState, type MouseEventHandler } from "react";
 import { Link } from "react-router";
 import { logo } from "../assets";
+import { getAuthErrorMessage } from "../features/auth/authErrors";
 import { useAuth } from "../features/auth/useAuth";
 
 function AppHeader() {
   const { user, loading, signOut } = useAuth();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+
+  const submitSignOut = async (): Promise<void> => {
+    setIsSigningOut(true);
+    setSignOutError(null);
+
+    try {
+      await signOut();
+    } catch (error: unknown) {
+      setSignOutError(getAuthErrorMessage(error));
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   const handleSignOut: MouseEventHandler<HTMLButtonElement> = () => {
-    void signOut().catch((error: unknown) => {
-      console.error("Failed to sign out:", error);
-    });
+    void submitSignOut();
   };
 
   return (
@@ -30,14 +44,22 @@ function AppHeader() {
           </>
         )}
         {!loading && user && (
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="black_btn ml-auto"
-            title={user.displayName ?? user.email ?? "Authenticated user"}
-          >
-            Sign Out
-          </button>
+          <div className="ml-auto flex items-center gap-3">
+            {signOutError ? (
+              <p className="text-sm text-red-800" role="alert">
+                {signOutError}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="black_btn disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSigningOut}
+              title={user.displayName ?? user.email ?? "Authenticated user"}
+            >
+              {isSigningOut ? "Signing Out…" : "Sign Out"}
+            </button>
+          </div>
         )}
       </nav>
 

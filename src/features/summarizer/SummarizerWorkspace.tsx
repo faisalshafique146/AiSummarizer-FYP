@@ -11,25 +11,24 @@ function SummarizerWorkspace() {
   const [inputValue, setInputValue] = useState("");
   const [outputValue, setOutputValue] = useState("");
   const [isFetching, setIsFetching] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleInputChange: ChangeEventHandler<HTMLTextAreaElement> = (event) => {
     setInputValue(event.target.value);
+    setErrorMessage(null);
   };
 
   const generateSummary = async (): Promise<void> => {
     try {
       setIsFetching(true);
+      setErrorMessage(null);
       setOutputValue(await summarizeText(inputValue));
     } catch (error: unknown) {
-      const summarizationError =
+      setErrorMessage(
         error instanceof SummarizationError
-          ? error
-          : new SummarizationError(
-              "invalid-response",
-              "An unexpected summarization error occurred.",
-              { cause: error },
-            );
-      console.error("Failed to fetch result:", summarizationError);
+          ? error.message
+          : "An unexpected summarization error occurred.",
+      );
     } finally {
       setIsFetching(false);
     }
@@ -43,13 +42,8 @@ function SummarizerWorkspace() {
     try {
       await navigator.clipboard.writeText(outputValue);
       alert("Text copied to clipboard!");
-    } catch (error: unknown) {
-      const clipboardError = new SummarizationError(
-        "clipboard-error",
-        "Failed to copy text.",
-        { cause: error },
-      );
-      console.error("Failed to copy text:", clipboardError);
+    } catch {
+      setErrorMessage("Failed to copy the summary.");
     }
   };
 
@@ -77,6 +71,11 @@ function SummarizerWorkspace() {
             {isFetching ? "Generating..." : "Get Result"}
           </button>
         </div>
+        {errorMessage ? (
+          <p className="max-w-96 text-sm text-red-300" role="alert">
+            {errorMessage}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col items-center justify-center space-y-3 rounded-lg bg-gray-700 px-3 py-6">

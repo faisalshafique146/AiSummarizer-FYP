@@ -1,103 +1,137 @@
 import {
+  MAX_SUMMARIZE_TEXT_LENGTH,
   SummarizationError,
-  type SummarizationApiErrorResponse,
-  type SummarizationApiResponse,
-  type SummarizationResult,
-  type SummarizationResultResponse,
+  type SummarizeError,
+  type SummarizeErrorCode,
+  type SummarizeRequest,
+  type SummarizeResponse,
 } from "./types";
 
-const modelEndpoint =
-  "https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6";
+const summarizeEndpoint = "/api/summarize";
+
+const errorCodes: ReadonlySet<string> = new Set<SummarizeErrorCode>([
+  "EMPTY_TEXT",
+  "INPUT_TOO_LARGE",
+  "INVALID_REQUEST",
+  "INVALID_RESPONSE",
+  "METHOD_NOT_ALLOWED",
+  "MODEL_UNAVAILABLE",
+  "NETWORK_FAILURE",
+  "RATE_LIMITED",
+  "SERVER_CONFIGURATION",
+  "UPSTREAM_FAILURE",
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function isSummarizationResult(value: unknown): value is SummarizationResult {
-  return isRecord(value) && typeof value.summary_text === "string";
+function isSummarizeErrorCode(value: unknown): value is SummarizeErrorCode {
+  return typeof value === "string" && errorCodes.has(value);
 }
 
-function isResultResponse(value: unknown): value is SummarizationResultResponse {
+function isSummarizeError(value: unknown): value is SummarizeError {
   return (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.every(isSummarizationResult)
+    isRecord(value) &&
+    isSummarizeErrorCode(value.code) &&
+    typeof value.message === "string" &&
+    typeof value.retryable === "boolean"
   );
 }
 
-function isErrorResponse(
-  value: unknown,
-): value is SummarizationApiErrorResponse {
-  return isRecord(value) && typeof value.error === "string";
+function isSummarizeResponse(value: unknown): value is SummarizeResponse {
+  if (!isRecord(value) || typeof value.ok !== "boolean") {
+    return false;
+  }
+
+  if (value.ok) {
+    return typeof value.summary === "string";
+  }
+
+  return isSummarizeError(value.error);
 }
 
-function isSummarizationApiResponse(
-  value: unknown,
-): value is SummarizationApiResponse {
-  return isResultResponse(value) || isErrorResponse(value);
+function createClientError(
+  code: SummarizeErrorCode,
+  message: string,
+  retryable = false,
+  options?: ErrorOptions,
+): SummarizationError {
+  return new SummarizationError({ code, message, retryable }, options);
 }
 
-async function readResponse(response: Response): Promise<unknown> {
+async function readResponse(response: Response): Promise<SummarizeResponse> {
+  let payload: unknown;
+
   try {
-    const payload: unknown = await response.json();
-    return payload;
+    payload = await response.json();
   } catch (error: unknown) {
-    throw new SummarizationError(
-      "invalid-response",
-      "The summarization service returned invalid JSON.",
+    throw createClientError(
+      "INVALID_RESPONSE",
+      "The summarization service returned an invalid response.",
+      true,
       { cause: error },
     );
   }
-}
 
-export async function summarizeText(input: string): Promise<string> {
-  const huggingFaceToken = import.meta.env.VITE_HUGGING_FACE_API_TOKEN;
-
-  if (!huggingFaceToken) {
-    throw new SummarizationError(
-      "missing-token",
-      "Missing VITE_HUGGING_FACE_API_TOKEN. Add it to your .env.local file.",
+  if (!isSummarizeResponse(payload)) {
+    throw createClientError(
+      "INVALID_RESPONSE",
+      "The summarization service returned an unexpected response.",
+      true,
     );
   }
 
+  return payload;
+}
+
+export async function summarizeText(input: string): Promise<string> {
+  const text = input.trim();
+
+  if (!text) {
+    throw createClientError("EMPTY_TEXT", "Enter text to summarize.");
+  }
+
+  if (text.length > MAX_SUMMARIZE_TEXT_LENGTH) {
+    throw createClientError(
+      "INPUT_TOO_LARGE",
+      `Text must be ${MAX_SUMMARIZE_TEXT_LENGTH.toLocaleString()} characters or fewer.`,
+    );
+  }
+
+  const request: SummarizeRequest = { text };
   let response: Response;
 
   try {
-    response = await fetch(modelEndpoint, {
+    response = await fetch(summarizeEndpoint, {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${huggingFaceToken}`,
         "Content-Type": "application/json",
       },
-      method: "POST",
-      body: JSON.stringify({ inputs: input }),
+      body: JSON.stringify(request),
     });
   } catch (error: unknown) {
-    throw new SummarizationError(
-      "network-error",
-      "Unable to reach the summarization service.",
+    throw createClientError(
+      "NETWORK_FAILURE",
+      "Unable to reach the summarization service. Try again.",
+      true,
       { cause: error },
     );
   }
 
   const payload = await readResponse(response);
 
-  if (!isSummarizationApiResponse(payload)) {
-    throw new SummarizationError(
-      "invalid-response",
-      "The summarization service returned an unexpected response.",
-    );
-  }
-
-  if (isErrorResponse(payload)) {
-    throw new SummarizationError("provider-error", payload.error);
+  if (!payload.ok) {
+    throw new SummarizationError(payload.error);
   }
 
   if (!response.ok) {
-    throw new SummarizationError(
-      "provider-error",
-      `The summarization service returned HTTP ${String(response.status)}.`,
+    throw createClientError(
+      "INVALID_RESPONSE",
+      "The summarization service returned an inconsistent response.",
+      true,
     );
   }
 
-  return payload[0].summary_text;
+  return payload.summary;
 }

@@ -1,6 +1,5 @@
 import { initializeApp, type FirebaseOptions } from "firebase/app";
-import { getAuth, type User } from "firebase/auth";
-import type { AuthenticatedUser } from "./types";
+import { getAuth } from "firebase/auth";
 
 type FirebaseEnvironmentVariable =
   | "VITE_FIREBASE_API_KEY"
@@ -25,15 +24,7 @@ const firebaseConfig: FirebaseOptions = {
   appId: requireEnvironmentVariable("VITE_FIREBASE_APP_ID"),
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const firebaseApp = initializeApp(firebaseConfig);
+const firebaseAuth = getAuth(firebaseApp);
 
-function toAuthenticatedUser(user: User): AuthenticatedUser {
-  return {
-    uid: user.uid,
-    displayName: user.displayName,
-    email: user.email,
-  };
-}
-
-export { app, auth, toAuthenticatedUser };
+export { firebaseAuth };

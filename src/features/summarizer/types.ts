@@ -1,19 +1,3 @@
-export interface AuthenticatedUser {
-  readonly uid: string;
-  readonly displayName: string | null;
-  readonly email: string | null;
-}
-
-export interface SignInFormValues {
-  email: string;
-  password: string;
-}
-
-export interface SignUpFormValues extends SignInFormValues {
-  name: string;
-  repeatedPassword: string;
-}
-
 export interface SummarizationResult {
   summary_text: string;
 }

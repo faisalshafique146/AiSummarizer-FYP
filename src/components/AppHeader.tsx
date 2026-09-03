@@ -1,37 +1,38 @@
 import type { MouseEventHandler } from "react";
 import { Link } from "react-router";
 import { logo } from "../assets";
-import type { AuthenticatedUser } from "../types";
+import { useAuth } from "../features/auth/useAuth";
 
-interface HeroProps {
-  user: AuthenticatedUser | null;
-  onLogout: () => Promise<void>;
-}
+function AppHeader() {
+  const { user, loading, signOut } = useAuth();
 
-function Hero({ user, onLogout }: HeroProps) {
-  const handleLogout: MouseEventHandler<HTMLButtonElement> = () => {
-    void onLogout();
+  const handleSignOut: MouseEventHandler<HTMLButtonElement> = () => {
+    void signOut().catch((error: unknown) => {
+      console.error("Failed to sign out:", error);
+    });
   };
 
   return (
     <header className="flex w-full flex-col items-center justify-center">
       <nav className="mb-10 flex w-full items-center pt-3">
-        <img src={logo} alt="HiSumz logo" className="w-28 object-contain" />
+        <Link to="/" aria-label="HiSumz home">
+          <img src={logo} alt="HiSumz logo" className="w-28 object-contain" />
+        </Link>
 
-        {!user && (
+        {!loading && !user && (
           <>
-            <Link to="/SigninModal" className="black_btn ml-auto">
+            <Link to="/sign-in" className="black_btn ml-auto">
               Sign In
             </Link>
-            <Link to="/SignupModal" className="black_btn ml-2">
+            <Link to="/sign-up" className="black_btn ml-2">
               Sign Up
             </Link>
           </>
         )}
-        {user && (
+        {!loading && user && (
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={handleSignOut}
             className="black_btn ml-auto"
             title={user.displayName ?? user.email ?? "Authenticated user"}
           >
@@ -52,4 +53,4 @@ function Hero({ user, onLogout }: HeroProps) {
   );
 }
 
-export default Hero;
+export default AppHeader;

@@ -3,32 +3,21 @@ import {
   type ChangeEventHandler,
   type SubmitEventHandler,
 } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { Link, useNavigate } from "react-router";
-import { getAuthErrorMessage } from "../authErrors";
-import { auth } from "../firebase";
-import type { SignInFormValues } from "../types";
-import AuthDialog from "./AuthDialog";
+import { Link, Navigate, useNavigate } from "react-router";
+import { getAuthErrorMessage } from "./authErrors";
+import AuthPageLayout from "./AuthPageLayout";
+import type { SignInCredentials } from "./types";
+import { useAuth } from "./useAuth";
 
-interface SigninModalProps {
-  onClose?: () => void;
-}
-
-function SigninModal({ onClose }: SigninModalProps) {
+function SignInPage() {
   const navigate = useNavigate();
-  const [values, setValues] = useState<SignInFormValues>({
+  const { user, loading, signIn } = useAuth();
+  const [values, setValues] = useState<SignInCredentials>({
     email: "",
     password: "",
   });
   const [error, setError] = useState("");
-
-  const handleClose = (): void => {
-    if (onClose) {
-      onClose();
-    } else {
-      void navigate("/");
-    }
-  };
+  const [submitting, setSubmitting] = useState(false);
 
   const handleEmailChange: ChangeEventHandler<HTMLInputElement> = (event) => {
     setValues((current) => ({ ...current, email: event.target.value }));
@@ -40,8 +29,7 @@ function SigninModal({ onClose }: SigninModalProps) {
     setValues((current) => ({ ...current, password: event.target.value }));
   };
 
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
+  const submitCredentials = async (): Promise<void> => {
     setError("");
 
     if (!values.email || !values.password) {
@@ -54,18 +42,43 @@ function SigninModal({ onClose }: SigninModalProps) {
       return;
     }
 
-    void signInWithEmailAndPassword(auth, values.email, values.password)
-      .then(() => navigate("/"))
-      .catch((caughtError: unknown) => {
-        setError(getAuthErrorMessage(caughtError));
-      });
+    try {
+      setSubmitting(true);
+      await signIn(values);
+      void navigate("/");
+    } catch (caughtError: unknown) {
+      setError(getAuthErrorMessage(caughtError));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
+    event.preventDefault();
+    void submitCredentials();
+  };
+
+  if (loading) {
+    return (
+      <AuthPageLayout
+        title="Checking your session"
+        description="Please wait while HiSumz restores your account."
+      >
+        <p className="mt-6 text-sm text-gray-700" role="status">
+          Loading…
+        </p>
+      </AuthPageLayout>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
-    <AuthDialog
+    <AuthPageLayout
       title="Sign In"
       description="Enter your email and password to Sign In."
-      onClose={handleClose}
     >
       <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
         <label className="flex flex-col gap-2 text-sm font-semibold text-gray-800">
@@ -94,20 +107,21 @@ function SigninModal({ onClose }: SigninModalProps) {
           </p>
         )}
         <button
-          className="rounded-lg bg-linear-to-r from-gray-900 to-gray-700 px-4 py-3 font-semibold text-white"
+          className="rounded-lg bg-linear-to-r from-gray-900 to-gray-700 px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={submitting}
           type="submit"
         >
-          Sign In
+          {submitting ? "Signing In…" : "Sign In"}
         </button>
         <p className="text-center text-sm text-gray-700">
           Don&apos;t have an account?
-          <Link to="/SignupModal" className="ml-1 font-bold text-gray-900">
+          <Link to="/sign-up" className="ml-1 font-bold text-gray-900">
             Sign up
           </Link>
         </p>
       </form>
-    </AuthDialog>
+    </AuthPageLayout>
   );
 }
 
-export default SigninModal;
+export default SignInPage;

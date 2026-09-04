@@ -25,6 +25,26 @@ beforeEach(() => {
 });
 
 describe("SignInPage", () => {
+  it("lets the user show and hide their password", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <SignInPage />
+      </MemoryRouter>,
+    );
+
+    const passwordInput = screen.getByLabelText("Password");
+    await user.type(passwordInput, "password123");
+
+    expect(passwordInput).toHaveAttribute("type", "password");
+    await user.click(screen.getByRole("button", { name: "Show password" }));
+    expect(passwordInput).toHaveAttribute("type", "text");
+    expect(passwordInput).toHaveValue("password123");
+
+    await user.click(screen.getByRole("button", { name: "Hide password" }));
+    expect(passwordInput).toHaveAttribute("type", "password");
+  });
+
   it("shows field errors instead of submitting empty credentials", async () => {
     const user = userEvent.setup();
     render(

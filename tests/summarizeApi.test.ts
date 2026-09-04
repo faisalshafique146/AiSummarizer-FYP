@@ -38,6 +38,25 @@ describe("summarize API handler", () => {
     });
   });
 
+  it("normalizes unhandled function failures instead of returning platform HTML", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const request = postRequest({ text: validSource });
+    Object.defineProperty(request, "method", {
+      get() {
+        throw new Error("unexpected invocation failure");
+      },
+    });
+
+    const response = await vercelHandler.fetch(request);
+    const payload: unknown = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toMatchObject({
+      ok: false,
+      error: { code: "UPSTREAM_FAILURE", retryable: true },
+    });
+  });
+
   it("rejects whitespace-only input before calling the provider", async () => {
     const fetchMock = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", fetchMock);

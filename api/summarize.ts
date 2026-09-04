@@ -14,6 +14,12 @@ const upstreamTimeoutMilliseconds = 30_000;
 const minimumSummaryTokens = 5;
 const maximumSummaryTokens = 160;
 
+const invocationFailure: SummarizeError = {
+  code: "UPSTREAM_FAILURE",
+  message: "The summarization service could not process the request.",
+  retryable: true,
+};
+
 function getMaximumSummaryTokens(text: string): number {
   const proportionalLimit = Math.floor(countWords(text) * 0.45);
   return Math.min(maximumSummaryTokens, Math.max(12, proportionalLimit));
@@ -254,10 +260,15 @@ export async function handleSummarizeRequest(
 }
 
 export default {
-  fetch(request: Request): Promise<Response> {
-    return handleSummarizeRequest(
-      request,
-      process.env.HUGGING_FACE_API_TOKEN,
-    );
+  async fetch(request: Request): Promise<Response> {
+    try {
+      return await handleSummarizeRequest(
+        request,
+        process.env.HUGGING_FACE_API_TOKEN,
+      );
+    } catch (error: unknown) {
+      console.error("Unhandled summarization function error", error);
+      return errorResponse(500, invocationFailure);
+    }
   },
 };

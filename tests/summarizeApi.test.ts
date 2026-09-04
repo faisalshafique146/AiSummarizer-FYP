@@ -5,7 +5,7 @@ import {
   MAX_SUMMARIZE_TEXT_LENGTH,
   MIN_SUMMARIZE_WORD_COUNT,
 } from "../src/features/summarizer/types.ts";
-import { handleSummarizeRequest } from "./summarize.ts";
+import { handleSummarizeRequest } from "../api/summarize.ts";
 
 const validSource = Array.from(
   { length: MIN_SUMMARIZE_WORD_COUNT },

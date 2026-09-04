@@ -37,15 +37,19 @@ export function observeAuthState(
 
 export async function signInUser(
   credentials: SignInCredentials,
-): Promise<void> {
-  await signInWithEmailAndPassword(
+): Promise<AuthenticatedUser> {
+  const credential = await signInWithEmailAndPassword(
     firebaseAuth,
     credentials.email,
     credentials.password,
   );
+
+  return mapAuthenticatedUser(credential.user);
 }
 
-export async function signUpUser(details: SignUpDetails): Promise<void> {
+export async function signUpUser(
+  details: SignUpDetails,
+): Promise<AuthenticatedUser> {
   const credential = await createUserWithEmailAndPassword(
     firebaseAuth,
     details.email,
@@ -53,6 +57,7 @@ export async function signUpUser(details: SignUpDetails): Promise<void> {
   );
 
   await updateProfile(credential.user, { displayName: details.displayName });
+  return mapAuthenticatedUser(credential.user);
 }
 
 export async function signOutUser(): Promise<void> {

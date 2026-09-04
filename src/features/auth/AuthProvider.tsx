@@ -41,15 +41,18 @@ function AuthProvider({ children }: PropsWithChildren) {
   const signIn = useCallback(async (
     credentials: SignInCredentials,
   ): Promise<void> => {
-    await signInUser(credentials);
+    const authenticatedUser = await signInUser(credentials);
+    setUser(authenticatedUser);
   }, []);
 
   const signUp = useCallback(async (details: SignUpDetails): Promise<void> => {
-    await signUpUser(details);
+    const authenticatedUser = await signUpUser(details);
+    setUser(authenticatedUser);
   }, []);
 
   const signOut = useCallback(async (): Promise<void> => {
     await signOutUser();
+    setUser(null);
   }, []);
 
   const value = useMemo<AuthContextValue>(

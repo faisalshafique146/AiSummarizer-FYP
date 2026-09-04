@@ -253,11 +253,9 @@ export async function handleSummarizeRequest(
   return successResponse(summary);
 }
 
-export default {
-  fetch(request: Request) {
-    return handleSummarizeRequest(
-      request,
-      process.env.HUGGING_FACE_API_TOKEN,
-    );
-  },
-};
+export function POST(request: Request): Promise<Response> {
+  return handleSummarizeRequest(
+    request,
+    process.env.HUGGING_FACE_API_TOKEN,
+  );
+}

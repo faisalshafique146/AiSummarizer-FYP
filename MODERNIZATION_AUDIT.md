@@ -1,5 +1,7 @@
 # Phase 1 Modernization Audit
 
+> Historical baseline: this document records the repository at the start of modernization. See `README.md` and `FINAL_MODERNIZATION_REPORT.md` for the current implementation and verified final status.
+
 Audit date: 2026-09-04
 
 This audit describes the repository as it existed at the start of Phase 1 and identifies the small baseline corrections made during this phase. It does not propose or implement a visual redesign.

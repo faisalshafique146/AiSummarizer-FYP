@@ -35,6 +35,7 @@ export default defineConfig(
       "vitest.config.ts",
       "api/**/*.ts",
       "config/**/*.ts",
+      "tests/**/*.ts",
     ],
     languageOptions: {
       globals: globals.node,

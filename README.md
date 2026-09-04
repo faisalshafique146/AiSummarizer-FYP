@@ -4,7 +4,7 @@ HiSumz AI is a TypeScript and React application that summarizes pasted text with
 
 ## Local setup
 
-Requirements: Node.js 20.19 or newer and npm.
+Requirements: a supported Node.js LTS release (`22.13+`, `24.x`, or `26+`) and npm.
 
 1. Install the locked dependencies:
 
@@ -46,6 +46,8 @@ If a Hugging Face token was previously deployed as `VITE_HUGGING_FACE_API_TOKEN`
 - `npx vercel dev` runs the project through Vercel's local runtime when provider-level testing is needed.
 - `npm run typecheck` runs the strict TypeScript project build without emitting files.
 - `npm run lint` runs type-aware ESLint checks over the TypeScript source.
+- `npm run test` runs the Vitest and React Testing Library suite once.
+- `npm run test:watch` runs the test suite in watch mode during development.
 - `npm run build` creates the production bundle in `dist/`.
 - `npm run preview` serves the production bundle locally.
 

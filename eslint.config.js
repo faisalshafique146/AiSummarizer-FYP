@@ -30,7 +30,12 @@ export default defineConfig(
     },
   },
   {
-    files: ["vite.config.ts", "api/**/*.ts", "config/**/*.ts"],
+    files: [
+      "vite.config.ts",
+      "vitest.config.ts",
+      "api/**/*.ts",
+      "config/**/*.ts",
+    ],
     languageOptions: {
       globals: globals.node,
     },

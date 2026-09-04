@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { summarizeText } from "./summarizationService";
 import {
   MAX_SUMMARIZE_TEXT_LENGTH,
@@ -45,16 +45,16 @@ export function useSummarizer() {
     };
   }, []);
 
-  const setInput = useCallback((value: string): void => {
+  const setInput = (value: string): void => {
     if (activeRequestRef.current) {
       return;
     }
 
     setInputState(value);
     setRequestState(idleState);
-  }, []);
+  };
 
-  const submit = useCallback(async (): Promise<void> => {
+  const submit = async (): Promise<void> => {
     if (activeRequestRef.current) {
       return;
     }
@@ -109,9 +109,9 @@ export function useSummarizer() {
         activeRequestRef.current = null;
       }
     }
-  }, [input]);
+  };
 
-  const cancel = useCallback((): void => {
+  const cancel = (): void => {
     const activeRequest = activeRequestRef.current;
 
     if (!activeRequest) {
@@ -121,14 +121,14 @@ export function useSummarizer() {
     activeRequestRef.current = null;
     activeRequest.abort();
     setRequestState(idleState);
-  }, []);
+  };
 
-  const clear = useCallback((): void => {
+  const clear = (): void => {
     activeRequestRef.current?.abort();
     activeRequestRef.current = null;
     setInputState("");
     setRequestState(idleState);
-  }, []);
+  };
 
   return {
     cancel,

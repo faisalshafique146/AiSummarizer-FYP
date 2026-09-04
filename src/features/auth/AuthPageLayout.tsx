@@ -45,12 +45,15 @@ function AuthPageLayout({
           </div>
         </div>
 
-        <Link className="text-sm text-slate-500 hover:text-slate-950" to="/">
+        <Link
+          className="w-fit rounded text-sm text-slate-600 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+          to="/"
+        >
           &larr; Return to HiSumz
         </Link>
       </aside>
 
-      <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
+      <section className="flex items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
         <div className="w-full max-w-[430px]">
           <div className="mb-12 flex items-center justify-between lg:hidden">
             <Link
@@ -60,7 +63,10 @@ function AuthPageLayout({
             >
               <Brand />
             </Link>
-            <Link className="text-sm text-slate-500 hover:text-slate-950" to="/">
+            <Link
+              className="rounded text-sm text-slate-600 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+              to="/"
+            >
               Back
             </Link>
           </div>
@@ -68,7 +74,7 @@ function AuthPageLayout({
           <p className="font-mono text-xs tracking-[0.16em] text-blue-700 uppercase">
             Account access
           </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-[-0.045em] text-slate-950">
+          <h1 className="mt-4 text-3xl font-semibold tracking-[-0.045em] text-slate-950 sm:text-4xl">
             {title}
           </h1>
           <p className="mt-3 text-base leading-7 text-slate-600">{description}</p>

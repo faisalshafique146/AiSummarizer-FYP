@@ -10,7 +10,7 @@ function WorkspaceLoadingState() {
       <div className="h-5 w-32 animate-pulse rounded bg-slate-200" />
       <div className="mt-5 h-10 w-full max-w-lg animate-pulse rounded-lg bg-slate-200" />
       <div className="mt-3 h-6 w-full max-w-2xl animate-pulse rounded bg-slate-100" />
-      <Panel className="mt-10 grid min-h-[520px] animate-pulse gap-px overflow-hidden bg-slate-200 lg:grid-cols-2">
+      <Panel className="mt-10 grid min-h-80 animate-pulse gap-px overflow-hidden bg-slate-200 sm:min-h-96 lg:grid-cols-2">
         <div className="bg-white" />
         <div className="bg-slate-50" />
       </Panel>

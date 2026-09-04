@@ -12,7 +12,7 @@ function Toast({ message, onDismiss, tone = "success" }: ToastProps) {
 
   return (
     <div
-      className={`fixed right-4 bottom-4 z-50 flex max-w-sm items-center gap-3 rounded-md border px-4 py-3 text-sm shadow-lg sm:right-6 sm:bottom-6 ${toneClasses}`}
+      className={`fixed right-4 bottom-4 left-4 z-50 flex max-w-sm items-center gap-3 rounded-md border px-4 py-3 text-sm shadow-lg sm:right-6 sm:left-auto sm:bottom-6 ${toneClasses}`}
       role={tone === "error" ? "alert" : "status"}
     >
       <span

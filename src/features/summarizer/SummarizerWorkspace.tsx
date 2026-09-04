@@ -42,7 +42,7 @@ function CopyIcon() {
 
 function SummarySkeleton() {
   return (
-    <div aria-label="Generating summary" className="space-y-3" role="status">
+    <div className="space-y-3" role="status">
       <div className="h-4 w-full animate-pulse rounded bg-slate-200" />
       <div className="h-4 w-[92%] animate-pulse rounded bg-slate-200" />
       <div className="h-4 w-[97%] animate-pulse rounded bg-slate-200" />
@@ -76,7 +76,7 @@ function SummarizerWorkspace() {
 
     const timeoutId = window.setTimeout(() => {
       setToast(null);
-    }, 3_000);
+    }, 5_000);
     return () => {
       window.clearTimeout(timeoutId);
     };
@@ -145,12 +145,18 @@ function SummarizerWorkspace() {
     <>
       <Panel className="overflow-hidden border-slate-300">
         <form className="grid lg:grid-cols-2" onSubmit={handleSubmit}>
-          <section className="flex min-h-[500px] flex-col p-5 sm:p-7 lg:border-r lg:border-slate-300">
+          <section
+            aria-labelledby="source-heading"
+            className="flex min-w-0 flex-col p-5 sm:p-7 lg:border-r lg:border-slate-300"
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-mono text-xs tracking-[0.14em] text-blue-700 uppercase">
+                <h2
+                  className="font-mono text-xs tracking-[0.14em] text-blue-700 uppercase"
+                  id="source-heading"
+                >
                   01 / Source
-                </p>
+                </h2>
                 <p className="mt-2 text-sm text-slate-500">
                   Paste an article, report, or passage to condense.
                 </p>
@@ -173,7 +179,7 @@ function SummarizerWorkspace() {
             </label>
             <Textarea
               aria-describedby="source-text-meta"
-              className="mt-5 min-h-72 flex-1 resize-none border-slate-200 bg-[#f6f7f8] p-5 focus:bg-white focus:ring-2 lg:min-h-80"
+              className="mt-5 min-h-64 resize-y border-slate-200 bg-[#f6f7f8] p-4 focus-visible:bg-white focus-visible:ring-2 sm:min-h-72 sm:p-5 lg:min-h-80 lg:flex-1 lg:resize-none"
               disabled={isFetching}
               id="source-text"
               maxLength={MAX_SUMMARIZE_TEXT_LENGTH}
@@ -204,7 +210,7 @@ function SummarizerWorkspace() {
             </div>
 
             <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Tip: press Ctrl/Command + Enter to generate
               </p>
               <Button
@@ -220,12 +226,18 @@ function SummarizerWorkspace() {
             </div>
           </section>
 
-          <section className="flex min-h-[500px] flex-col border-t border-slate-300 bg-[#f3f4f4] p-5 sm:p-7 lg:border-t-0">
+          <section
+            aria-labelledby="summary-heading"
+            className="flex min-w-0 flex-col border-t border-slate-300 bg-[#f3f4f4] p-5 sm:p-7 lg:border-t-0"
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-mono text-xs tracking-[0.14em] text-blue-700 uppercase">
+                <h2
+                  className="font-mono text-xs tracking-[0.14em] text-blue-700 uppercase"
+                  id="summary-heading"
+                >
                   02 / Summary
-                </p>
+                </h2>
                 <p className="mt-2 text-sm text-slate-500">
                   Review the result before copying or starting again.
                 </p>
@@ -238,7 +250,7 @@ function SummarizerWorkspace() {
               ) : null}
             </div>
 
-            <div className="mt-5 flex flex-1 flex-col rounded-md border border-slate-300 bg-white p-5 sm:p-6">
+            <div className="mt-5 flex min-h-64 min-w-0 flex-1 flex-col rounded-md border border-slate-300 bg-white p-5 sm:min-h-72 sm:p-6 lg:min-h-80">
               {isFetching ? <SummarySkeleton /> : null}
 
               {!isFetching && summaryError ? (
@@ -260,9 +272,14 @@ function SummarizerWorkspace() {
               ) : null}
 
               {!isFetching && !summaryError && outputValue ? (
-                <article className="whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
-                  {outputValue}
-                </article>
+                <>
+                  <p className="sr-only" role="status">
+                    Summary generated. {outputWords.toLocaleString()} {outputWords === 1 ? "word" : "words"}.
+                  </p>
+                  <article className="break-words whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
+                    {outputValue}
+                  </article>
+                </>
               ) : null}
 
               {!isFetching && !summaryError && !outputValue ? (

@@ -11,12 +11,12 @@ const workflowSteps = [
 function SignedOutLanding() {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-      <section className="border-b border-slate-300 py-16 sm:py-24 lg:py-28">
+      <section className="border-b border-slate-300 py-12 sm:py-24 lg:py-28">
         <p className="font-mono text-xs tracking-[0.16em] text-blue-700 uppercase">
           Text summarizer / HiSumz
         </p>
         <div className="mt-7 grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:items-end lg:gap-16">
-          <h1 className="max-w-4xl text-5xl leading-[0.98] font-semibold tracking-[-0.055em] text-slate-950 sm:text-6xl lg:text-7xl">
+          <h1 className="max-w-4xl text-4xl leading-[1.02] font-semibold tracking-[-0.05em] text-slate-950 sm:text-6xl sm:leading-[0.98] lg:text-7xl">
             Keep the point. Cut the length.
           </h1>
           <div className="max-w-lg lg:pb-1">

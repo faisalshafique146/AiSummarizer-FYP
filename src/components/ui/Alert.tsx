@@ -20,7 +20,7 @@ function Alert({
 
   return (
     <div
-      className={`rounded-md border px-4 py-3 text-sm ${toneClasses} ${className}`}
+      className={`break-words rounded-md border px-4 py-3 text-sm ${toneClasses} ${className}`}
       role={tone === "error" ? "alert" : "status"}
     >
       {title ? <p className="font-semibold">{title}</p> : null}

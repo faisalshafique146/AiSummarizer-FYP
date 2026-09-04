@@ -39,7 +39,11 @@ function AuthField({
         aria-invalid={Boolean(error)}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
-        className={error ? "border-red-500 focus:border-red-600 focus:ring-red-100" : ""}
+        className={
+          error
+            ? "border-red-500 focus-visible:border-red-600 focus-visible:ring-red-100"
+            : ""
+        }
         id={id}
         required
         type={type}

@@ -71,7 +71,8 @@ function AppHeader() {
                   className={buttonStyles({ variant: "primary" })}
                   to="/sign-up"
                 >
-                  Create account
+                  <span className="sm:hidden">Sign up</span>
+                  <span className="hidden sm:inline">Create account</span>
                 </Link>
               </>
             ) : null}

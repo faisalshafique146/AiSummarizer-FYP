@@ -3,13 +3,21 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { summarizeText } from "./summarizationService";
 import SummarizerWorkspace from "./SummarizerWorkspace";
-import { MAX_SUMMARIZE_TEXT_LENGTH, SummarizationError } from "./types";
+import {
+  MAX_SUMMARIZE_TEXT_LENGTH,
+  MIN_SUMMARIZE_WORD_COUNT,
+  SummarizationError,
+} from "./types";
 
 vi.mock("./summarizationService", () => ({
   summarizeText: vi.fn(),
 }));
 
 const summarizeTextMock = vi.mocked(summarizeText);
+const validSource = Array.from(
+  { length: MIN_SUMMARIZE_WORD_COUNT },
+  (_, index) => `word${String(index + 1)}`,
+).join(" ");
 
 function deferred<T>() {
   let resolvePromise: ((value: T) => void) | undefined;
@@ -33,7 +41,7 @@ beforeEach(() => {
 });
 
 describe("SummarizerWorkspace", () => {
-  it("blocks empty and over-limit input without making a request", async () => {
+  it("blocks empty, too-short, and over-limit input without making a request", async () => {
     const user = userEvent.setup();
     render(<SummarizerWorkspace />);
 
@@ -42,6 +50,15 @@ describe("SummarizerWorkspace", () => {
     await user.click(screen.getByRole("button", { name: "Generate summary" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent("Enter text to summarize.");
+    expect(summarizeTextMock).not.toHaveBeenCalled();
+
+    await user.clear(input);
+    await user.type(input, "994. Rotting Oranges");
+    await user.click(screen.getByRole("button", { name: "Generate summary" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      `Add at least ${MIN_SUMMARIZE_WORD_COUNT.toLocaleString()} words so there is enough source material to summarize.`,
+    );
     expect(summarizeTextMock).not.toHaveBeenCalled();
 
     fireEvent.change(input, {
@@ -65,14 +82,14 @@ describe("SummarizerWorkspace", () => {
     const copyButton = screen.getByRole("button", { name: "Copy" });
     expect(copyButton).toBeDisabled();
 
-    await user.type(input, "  Long source text.  ");
+    fireEvent.change(input, { target: { value: `  ${validSource}  ` } });
     await user.click(screen.getByRole("button", { name: "Generate summary" }));
 
     expect(screen.getByRole("button", { name: "Generating summary..." })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeEnabled();
-    expect(input).toHaveValue("Long source text.");
+    expect(input).toHaveValue(validSource);
     expect(summarizeTextMock).toHaveBeenCalledWith(
-      "Long source text.",
+      validSource,
       expect.any(AbortSignal),
     );
 
@@ -105,13 +122,13 @@ describe("SummarizerWorkspace", () => {
     render(<SummarizerWorkspace />);
 
     const input = screen.getByRole("textbox", { name: "Text to summarize" });
-    await user.type(input, "Keep this source text.");
+    fireEvent.change(input, { target: { value: validSource } });
     await user.click(screen.getByRole("button", { name: "Generate summary" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The summarization model is temporarily unavailable.",
     );
-    expect(input).toHaveValue("Keep this source text.");
+    expect(input).toHaveValue(validSource);
 
     await user.click(screen.getByRole("button", { name: "Try again" }));
 

@@ -1,13 +1,23 @@
 import {
-  MAX_SUMMARIZE_TEXT_LENGTH,
   type SummarizeError,
   type SummarizeRequest,
   type SummarizeResponse,
 } from "../src/features/summarizer/types.ts";
+import {
+  countWords,
+  validateSummarizeText,
+} from "../src/features/summarizer/validation.ts";
 
 const modelEndpoint =
   "https://router.huggingface.co/hf-inference/models/sshleifer/distilbart-cnn-12-6";
 const upstreamTimeoutMilliseconds = 30_000;
+const minimumSummaryTokens = 5;
+const maximumSummaryTokens = 160;
+
+function getMaximumSummaryTokens(text: string): number {
+  const proportionalLimit = Math.floor(countWords(text) * 0.45);
+  return Math.min(maximumSummaryTokens, Math.max(12, proportionalLimit));
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -61,33 +71,17 @@ function validateRequestBody(
     };
   }
 
-  const text = body.text.trim();
+  const validation = validateSummarizeText(body.text);
 
-  if (!text) {
+  if (!validation.valid) {
     return {
       valid: false,
-      status: 400,
-      error: {
-        code: "EMPTY_TEXT",
-        message: "Enter text to summarize.",
-        retryable: false,
-      },
+      status: validation.error.code === "INPUT_TOO_LARGE" ? 413 : 400,
+      error: validation.error,
     };
   }
 
-  if (text.length > MAX_SUMMARIZE_TEXT_LENGTH) {
-    return {
-      valid: false,
-      status: 413,
-      error: {
-        code: "INPUT_TOO_LARGE",
-        message: `Text must be ${MAX_SUMMARIZE_TEXT_LENGTH.toLocaleString()} characters or fewer.`,
-        retryable: false,
-      },
-    };
-  }
-
-  return { valid: true, request: { text } };
+  return { valid: true, request: { text: validation.text } };
 }
 
 function mapUpstreamFailure(response: Response): Response {
@@ -203,7 +197,13 @@ export async function handleSummarizeRequest(
       },
       body: JSON.stringify({
         inputs: validation.request.text,
-        parameters: { truncation: "longest_first" },
+        parameters: {
+          clean_up_tokenization_spaces: true,
+          do_sample: false,
+          max_new_tokens: getMaximumSummaryTokens(validation.request.text),
+          min_new_tokens: minimumSummaryTokens,
+          truncation: "longest_first",
+        },
       }),
       signal: AbortSignal.timeout(upstreamTimeoutMilliseconds),
     });
@@ -238,6 +238,15 @@ export async function handleSummarizeRequest(
       code: "UPSTREAM_FAILURE",
       message: "The summarization provider returned an unexpected response.",
       retryable: true,
+    });
+  }
+
+  if (countWords(summary) >= countWords(validation.request.text)) {
+    return errorResponse(422, {
+      code: "UNUSABLE_SUMMARY",
+      message:
+        "The source is already too concise or repetitive to summarize reliably. Try a longer, more detailed passage.",
+      retryable: false,
     });
   }
 

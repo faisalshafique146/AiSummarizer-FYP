@@ -1,4 +1,5 @@
 export const MAX_SUMMARIZE_TEXT_LENGTH = 12_000;
+export const MIN_SUMMARIZE_WORD_COUNT = 30;
 
 export interface SummarizeRequest {
   text: string;
@@ -6,6 +7,7 @@ export interface SummarizeRequest {
 
 export type SummarizeErrorCode =
   | "EMPTY_TEXT"
+  | "INPUT_TOO_SHORT"
   | "INPUT_TOO_LARGE"
   | "INVALID_REQUEST"
   | "INVALID_RESPONSE"
@@ -14,6 +16,7 @@ export type SummarizeErrorCode =
   | "NETWORK_FAILURE"
   | "RATE_LIMITED"
   | "SERVER_CONFIGURATION"
+  | "UNUSABLE_SUMMARY"
   | "UPSTREAM_FAILURE";
 
 export interface SummarizeError {

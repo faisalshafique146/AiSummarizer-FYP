@@ -1,8 +1,16 @@
 // @vitest-environment node
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MAX_SUMMARIZE_TEXT_LENGTH } from "../src/features/summarizer/types.ts";
+import {
+  MAX_SUMMARIZE_TEXT_LENGTH,
+  MIN_SUMMARIZE_WORD_COUNT,
+} from "../src/features/summarizer/types.ts";
 import { handleSummarizeRequest } from "./summarize.ts";
+
+const validSource = Array.from(
+  { length: MIN_SUMMARIZE_WORD_COUNT },
+  (_, index) => `word${String(index + 1)}`,
+).join(" ");
 
 function postRequest(body: unknown): Request {
   return new Request("http://localhost/api/summarize", {
@@ -50,6 +58,24 @@ describe("summarize API handler", () => {
     });
   });
 
+  it("rejects a title or fragment before calling the provider", async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await handleSummarizeRequest(
+      postRequest({ text: "994. Rotting Oranges" }),
+      "token",
+    );
+    const payload: unknown = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toMatchObject({
+      ok: false,
+      error: { code: "INPUT_TOO_SHORT", retryable: false },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("maps provider rate limits to a safe typed error", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response("provider details", {
@@ -60,7 +86,7 @@ describe("summarize API handler", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await handleSummarizeRequest(
-      postRequest({ text: "A valid source passage." }),
+      postRequest({ text: validSource }),
       "token",
     );
     const payload: unknown = await response.json();
@@ -78,20 +104,59 @@ describe("summarize API handler", () => {
   });
 
   it("returns a normalized summary from a valid provider response", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn<typeof fetch>().mockResolvedValue(
-        Response.json([{ summary_text: "  A concise result.  " }]),
-      ),
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json([{ summary_text: "  A concise result.  " }]),
     );
+    vi.stubGlobal("fetch", fetchMock);
 
     const response = await handleSummarizeRequest(
-      postRequest({ text: "A valid source passage." }),
+      postRequest({ text: validSource }),
       "token",
     );
     const payload: unknown = await response.json();
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({ ok: true, summary: "A concise result." });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        body: JSON.stringify({
+          inputs: validSource,
+          parameters: {
+            clean_up_tokenization_spaces: true,
+            do_sample: false,
+            max_new_tokens: 13,
+            min_new_tokens: 5,
+            truncation: "longest_first",
+          },
+        }),
+      }),
+    );
+  });
+
+  it("rejects a model result that is not shorter than its source", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>().mockResolvedValue(
+        Response.json([{ summary_text: validSource }]),
+      ),
+    );
+
+    const response = await handleSummarizeRequest(
+      postRequest({ text: validSource }),
+      "token",
+    );
+    const payload: unknown = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(payload).toEqual({
+      ok: false,
+      error: {
+        code: "UNUSABLE_SUMMARY",
+        message:
+          "The source is already too concise or repetitive to summarize reliably. Try a longer, more detailed passage.",
+        retryable: false,
+      },
+    });
   });
 });

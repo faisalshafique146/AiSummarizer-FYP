@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { summarizeText } from "./summarizationService";
+import { MIN_SUMMARIZE_WORD_COUNT } from "./types";
+
+const validSource = Array.from(
+  { length: MIN_SUMMARIZE_WORD_COUNT },
+  (_, index) => `word${String(index + 1)}`,
+).join(" ");
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -14,12 +20,12 @@ describe("summarization client service", () => {
     const controller = new AbortController();
 
     await expect(
-      summarizeText("  Source text  ", controller.signal),
+      summarizeText(`  ${validSource}  `, controller.signal),
     ).resolves.toBe("A useful summary.");
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/summarize",
       expect.objectContaining({
-        body: JSON.stringify({ text: "Source text" }),
+        body: JSON.stringify({ text: validSource }),
         method: "POST",
         signal: controller.signal,
       }),
@@ -45,7 +51,7 @@ describe("summarization client service", () => {
     );
 
     await expect(
-      summarizeText("Source text", new AbortController().signal),
+      summarizeText(validSource, new AbortController().signal),
     ).rejects.toMatchObject({
       details: {
         code: "MODEL_UNAVAILABLE",
@@ -67,7 +73,7 @@ describe("summarization client service", () => {
     );
 
     await expect(
-      summarizeText("Source text", new AbortController().signal),
+      summarizeText(validSource, new AbortController().signal),
     ).rejects.toMatchObject({
       details: {
         code: "INVALID_RESPONSE",

@@ -34,7 +34,7 @@ Configure these variables in Vercel Project Settings for every environment that 
 
 The Hugging Face token needs permission to call Inference Providers. Vercel makes unprefixed variables available to `api/summarize.ts` at runtime; Vite only exposes variables prefixed with `VITE_` to the client bundle. Changes to Vercel environment variables require a new deployment.
 
-The root `api/summarize.ts` file is deployed automatically as `POST /api/summarize`. No `vercel.json` or backend framework is required. The endpoint accepts JSON shaped as `{ "text": "..." }`, trims the text, and rejects empty, malformed, non-JSON, or over-12,000-character requests. Successful responses are `{ "ok": true, "summary": "..." }`; failures use `{ "ok": false, "error": { "code", "message", "retryable" } }`.
+The root `api/summarize.ts` file is deployed automatically as `POST /api/summarize`. No `vercel.json` or backend framework is required. The endpoint accepts JSON shaped as `{ "text": "..." }`, trims the text, and rejects empty, malformed, non-JSON, under-30-word, or over-12,000-character requests. The minimum prevents a summarization model from inventing filler when it receives only a title or fragment. Generation length is capped in proportion to the source, and a result that is not shorter than its source is rejected instead of being shown as a useful summary. Successful responses are `{ "ok": true, "summary": "..." }`; failures use `{ "ok": false, "error": { "code", "message", "retryable" } }`.
 
 Firebase web configuration is public client metadata, but it should still use appropriate Firebase Authentication settings and API-key restrictions. `HUGGING_FACE_API_TOKEN` is private and must exist only in local server configuration and Vercel environment settings.
 

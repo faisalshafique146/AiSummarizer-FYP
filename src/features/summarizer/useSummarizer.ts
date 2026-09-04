@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { summarizeText } from "./summarizationService";
 import {
-  MAX_SUMMARIZE_TEXT_LENGTH,
   SummarizationError,
   type SummarizeError,
 } from "./types";
+import { validateSummarizeText } from "./validation";
 
 export type SummarizerRequestState =
   | { status: "idle" }
@@ -15,13 +15,10 @@ export type SummarizerRequestState =
 
 const idleState: SummarizerRequestState = { status: "idle" };
 
-function validationError(
-  code: "EMPTY_TEXT" | "INPUT_TOO_LARGE",
-  message: string,
-): SummarizerRequestState {
+function validationError(error: SummarizeError): SummarizerRequestState {
   return {
     status: "validation-error",
-    error: { code, message, retryable: false },
+    error,
   };
 }
 
@@ -59,22 +56,14 @@ export function useSummarizer() {
       return;
     }
 
-    const text = input.trim();
+    const validation = validateSummarizeText(input);
 
-    if (!text) {
-      setRequestState(validationError("EMPTY_TEXT", "Enter text to summarize."));
+    if (!validation.valid) {
+      setRequestState(validationError(validation.error));
       return;
     }
 
-    if (text.length > MAX_SUMMARIZE_TEXT_LENGTH) {
-      setRequestState(
-        validationError(
-          "INPUT_TOO_LARGE",
-          `Text must be ${MAX_SUMMARIZE_TEXT_LENGTH.toLocaleString()} characters or fewer.`,
-        ),
-      );
-      return;
-    }
+    const { text } = validation;
 
     const controller = new AbortController();
     activeRequestRef.current = controller;
@@ -95,6 +84,7 @@ export function useSummarizer() {
       if (error instanceof SummarizationError) {
         const isValidationError =
           error.details.code === "EMPTY_TEXT" ||
+          error.details.code === "INPUT_TOO_SHORT" ||
           error.details.code === "INPUT_TOO_LARGE";
 
         setRequestState({

@@ -1,16 +1,17 @@
 import {
-  MAX_SUMMARIZE_TEXT_LENGTH,
   SummarizationError,
   type SummarizeError,
   type SummarizeErrorCode,
   type SummarizeRequest,
   type SummarizeResponse,
 } from "./types";
+import { validateSummarizeText } from "./validation";
 
 const summarizeEndpoint = "/api/summarize";
 
 const errorCodes: ReadonlySet<string> = new Set<SummarizeErrorCode>([
   "EMPTY_TEXT",
+  "INPUT_TOO_SHORT",
   "INPUT_TOO_LARGE",
   "INVALID_REQUEST",
   "INVALID_RESPONSE",
@@ -19,6 +20,7 @@ const errorCodes: ReadonlySet<string> = new Set<SummarizeErrorCode>([
   "NETWORK_FAILURE",
   "RATE_LIMITED",
   "SERVER_CONFIGURATION",
+  "UNUSABLE_SUMMARY",
   "UPSTREAM_FAILURE",
 ]);
 
@@ -89,20 +91,13 @@ export async function summarizeText(
   input: string,
   signal: AbortSignal,
 ): Promise<string> {
-  const text = input.trim();
+  const validation = validateSummarizeText(input);
 
-  if (!text) {
-    throw createClientError("EMPTY_TEXT", "Enter text to summarize.");
+  if (!validation.valid) {
+    throw new SummarizationError(validation.error);
   }
 
-  if (text.length > MAX_SUMMARIZE_TEXT_LENGTH) {
-    throw createClientError(
-      "INPUT_TOO_LARGE",
-      `Text must be ${MAX_SUMMARIZE_TEXT_LENGTH.toLocaleString()} characters or fewer.`,
-    );
-  }
-
-  const request: SummarizeRequest = { text };
+  const request: SummarizeRequest = { text: validation.text };
   let response: Response;
 
   try {

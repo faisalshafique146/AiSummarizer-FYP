@@ -11,17 +11,16 @@ import Button from "../../components/ui/Button";
 import Panel from "../../components/ui/Panel";
 import Textarea from "../../components/ui/Textarea";
 import Toast from "../../components/ui/Toast";
-import { MAX_SUMMARIZE_TEXT_LENGTH } from "./types";
+import {
+  MAX_SUMMARIZE_TEXT_LENGTH,
+  MIN_SUMMARIZE_WORD_COUNT,
+} from "./types";
 import { useSummarizer } from "./useSummarizer";
+import { countWords } from "./validation";
 
 interface ToastState {
   message: string;
   tone: "error" | "success";
-}
-
-function countWords(value: string): number {
-  const trimmedValue = value.trim();
-  return trimmedValue ? trimmedValue.split(/\s+/u).length : 0;
 }
 
 function CopyIcon() {
@@ -69,6 +68,7 @@ function SummarizerWorkspace() {
   const outputWords = countWords(summary);
   const remainingCharacters = MAX_SUMMARIZE_TEXT_LENGTH - input.length;
   const isNearLimit = remainingCharacters <= 1_000;
+  const needsMoreWords = inputWords > 0 && inputWords < MIN_SUMMARIZE_WORD_COUNT;
   const validationError =
     requestState.status === "validation-error" ? requestState.error : null;
   const apiError = requestState.status === "api-error" ? requestState.error : null;
@@ -196,6 +196,9 @@ function SummarizerWorkspace() {
             >
               <span>
                 {inputWords.toLocaleString()} {inputWords === 1 ? "word" : "words"}
+                {needsMoreWords
+                  ? ` / ${MIN_SUMMARIZE_WORD_COUNT.toLocaleString()} minimum`
+                  : ""}
               </span>
               {isNearLimit ? (
                 <span className="font-medium text-amber-700">

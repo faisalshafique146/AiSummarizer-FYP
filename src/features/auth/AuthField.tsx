@@ -65,7 +65,7 @@ function AuthField({
   const inputClassName = [
     isPasswordField ? "pr-12" : "",
     error
-      ? "border-red-500 focus-visible:border-red-600 focus-visible:ring-red-100"
+      ? "border-red-500 focus-visible:border-red-600 focus-visible:ring-red-100 dark:border-red-700 dark:focus-visible:border-red-500 dark:focus-visible:ring-red-950"
       : "",
   ]
     .filter(Boolean)
@@ -73,7 +73,7 @@ function AuthField({
 
   return (
     <div>
-      <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor={id}>
+      <label className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200" htmlFor={id}>
         {label}
       </label>
       <div className="relative">
@@ -93,7 +93,7 @@ function AuthField({
             aria-controls={id}
             aria-label={`${passwordVisible ? "Hide" : "Show"} ${label.toLowerCase()}`}
             aria-pressed={passwordVisible}
-            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-slate-500 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-slate-500 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 dark:text-slate-400 dark:hover:text-white dark:focus-visible:ring-blue-400"
             onClick={() => {
               setPasswordVisible((visible) => !visible);
             }}
@@ -104,12 +104,12 @@ function AuthField({
         ) : null}
       </div>
       {hint ? (
-        <p className="mt-2 text-xs leading-5 text-slate-500" id={hintId}>
+        <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400" id={hintId}>
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p className="mt-2 text-sm text-red-700" id={errorId} role="alert">
+        <p className="mt-2 text-sm text-red-700 dark:text-red-400" id={errorId} role="alert">
           {error}
         </p>
       ) : null}

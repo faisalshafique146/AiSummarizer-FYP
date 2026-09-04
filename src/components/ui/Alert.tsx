@@ -15,8 +15,8 @@ function Alert({
 }: AlertProps) {
   const toneClasses =
     tone === "error"
-      ? "border-red-200 bg-red-50 text-red-900"
-      : "border-blue-200 bg-blue-50 text-blue-950";
+      ? "border-red-200 bg-red-50 text-red-900 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
+      : "border-blue-200 bg-blue-50 text-blue-950 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-200";
 
   return (
     <div

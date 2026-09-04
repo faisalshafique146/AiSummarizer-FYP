@@ -9,7 +9,7 @@ const SignUpPage = lazy(() => import("../features/auth/SignUpPage"));
 function RouteLoadingState() {
   return (
     <main
-      className="flex min-h-screen items-center justify-center bg-[#f8f8f6] px-4 text-sm text-slate-600"
+      className="flex min-h-screen items-center justify-center bg-[#f8f8f6] px-4 text-sm text-slate-600 dark:bg-[#0b0f14] dark:text-slate-400"
       id="main-content"
     >
       <p role="status">Loading page...</p>

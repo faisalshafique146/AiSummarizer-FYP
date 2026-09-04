@@ -8,7 +8,23 @@
       name="description"
       content="HiSumz turns long articles, reports, and notes into clear summaries."
     />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#f8f8f6" />
+    <script>
+      try {
+        const storedTheme = localStorage.getItem("hisumz-theme");
+        const dark =
+          storedTheme === "dark" ||
+          (storedTheme !== "light" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute("content", dark ? "#0b0f14" : "#f8f8f6");
+      } catch {
+        // Use the light theme when browser preferences are unavailable.
+      }
+    </script>
     <title>HiSumz — Clear summaries from long text</title>
   </head>
   <body>

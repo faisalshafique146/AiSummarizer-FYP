@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthContextValue, AuthenticatedUser } from "../features/auth/types";
 import { useAuth } from "../features/auth/useAuth";
+import ThemeProvider from "../features/theme/ThemeProvider";
 import HomePage from "./HomePage";
 
 vi.mock("../features/auth/useAuth", () => ({
@@ -30,9 +31,11 @@ describe("HomePage authentication states", () => {
     useAuthMock.mockReturnValue(authValue(null));
 
     render(
-      <MemoryRouter>
-        <HomePage />
-      </MemoryRouter>,
+      <ThemeProvider>
+        <MemoryRouter>
+          <HomePage />
+        </MemoryRouter>
+      </ThemeProvider>,
     );
 
     expect(
@@ -57,9 +60,11 @@ describe("HomePage authentication states", () => {
     );
 
     render(
-      <MemoryRouter>
-        <HomePage />
-      </MemoryRouter>,
+      <ThemeProvider>
+        <MemoryRouter>
+          <HomePage />
+        </MemoryRouter>
+      </ThemeProvider>,
     );
 
     expect(

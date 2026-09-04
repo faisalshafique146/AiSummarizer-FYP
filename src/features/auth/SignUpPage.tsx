@@ -59,7 +59,7 @@ function SignUpPage() {
         title="Checking your session"
         description="Please wait while HiSumz restores your account."
       >
-        <div className="mt-8 flex items-center gap-3 text-sm text-slate-600" role="status">
+        <div className="mt-8 flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400" role="status">
           <Spinner />
           Loading your account...
         </div>
@@ -126,10 +126,10 @@ function SignUpPage() {
         >
           Create account
         </Button>
-        <p className="text-center text-sm text-slate-600">
+        <p className="text-center text-sm text-slate-600 dark:text-slate-400">
           Already have an account?{" "}
           <Link
-            className="font-semibold text-blue-700 hover:text-blue-800 hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            className="font-semibold text-blue-700 hover:text-blue-800 hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
             to="/sign-in"
           >
             Sign in

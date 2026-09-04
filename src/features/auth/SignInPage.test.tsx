@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { FirebaseError } from "firebase/app";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import ThemeProvider from "../theme/ThemeProvider";
 import SignInPage from "./SignInPage";
 import type { AuthContextValue } from "./types";
 import { useAuth } from "./useAuth";
@@ -13,6 +14,16 @@ vi.mock("./useAuth", () => ({
 
 const useAuthMock = vi.mocked(useAuth);
 const signIn = vi.fn<AuthContextValue["signIn"]>();
+
+function renderSignInPage() {
+  return render(
+    <ThemeProvider>
+      <MemoryRouter>
+        <SignInPage />
+      </MemoryRouter>
+    </ThemeProvider>,
+  );
+}
 
 beforeEach(() => {
   useAuthMock.mockReturnValue({
@@ -27,11 +38,7 @@ beforeEach(() => {
 describe("SignInPage", () => {
   it("lets the user show and hide their password", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <SignInPage />
-      </MemoryRouter>,
-    );
+    renderSignInPage();
 
     const passwordInput = screen.getByLabelText("Password");
     await user.type(passwordInput, "password123");
@@ -47,11 +54,7 @@ describe("SignInPage", () => {
 
   it("shows field errors instead of submitting empty credentials", async () => {
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <SignInPage />
-      </MemoryRouter>,
-    );
+    renderSignInPage();
 
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
@@ -65,11 +68,7 @@ describe("SignInPage", () => {
       new FirebaseError("auth/invalid-credential", "Internal Firebase details"),
     );
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <SignInPage />
-      </MemoryRouter>,
-    );
+    renderSignInPage();
 
     await user.type(screen.getByRole("textbox", { name: "Email address" }), "reader@example.com");
     await user.type(screen.getByLabelText("Password"), "password123");

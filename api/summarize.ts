@@ -1,3 +1,5 @@
+import type { IncomingHttpHeaders } from "node:http";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   type SummarizeError,
   type SummarizeRequest,
@@ -58,6 +60,79 @@ function successResponse(summary: string): Response {
     status: 200,
     headers: { "Cache-Control": "no-store" },
   });
+}
+
+function toWebHeaders(nodeHeaders: IncomingHttpHeaders): Headers {
+  const headers = new Headers();
+
+  for (const [name, value] of Object.entries(nodeHeaders)) {
+    if (typeof value === "string") {
+      headers.append(name, value);
+    } else if (Array.isArray(value)) {
+      for (const item of value) {
+        headers.append(name, item);
+      }
+    }
+  }
+
+  headers.delete("content-length");
+  return headers;
+}
+
+function getWebRequestBody(request: VercelRequest): string | undefined {
+  const body: unknown = request.body;
+
+  if (body === undefined || body === null) {
+    return undefined;
+  }
+
+  if (typeof body === "string") {
+    return body;
+  }
+
+  if (body instanceof Uint8Array) {
+    return Buffer.from(body).toString("utf8");
+  }
+
+  return JSON.stringify(body);
+}
+
+function toWebRequest(request: VercelRequest): Request {
+  const method = request.method ?? "GET";
+  const host = request.headers.host ?? "localhost";
+  const url = new URL(request.url ?? "/api/summarize", `https://${host}`);
+  const init: RequestInit = {
+    headers: toWebHeaders(request.headers),
+    method,
+  };
+
+  if (method !== "GET" && method !== "HEAD") {
+    const body = getWebRequestBody(request);
+
+    if (body !== undefined) {
+      init.body = body;
+    }
+  }
+
+  return new Request(url, init);
+}
+
+async function writeNodeResponse(
+  webResponse: Response,
+  response: VercelResponse,
+): Promise<void> {
+  response.statusCode = webResponse.status;
+  webResponse.headers.forEach((value, name) => {
+    response.setHeader(name, value);
+  });
+  response.end(Buffer.from(await webResponse.arrayBuffer()));
+}
+
+function writeInvocationFailure(response: VercelResponse): void {
+  response.statusCode = 500;
+  response.setHeader("Cache-Control", "no-store");
+  response.setHeader("Content-Type", "application/json; charset=utf-8");
+  response.end(JSON.stringify({ ok: false, error: invocationFailure }));
 }
 
 function validateRequestBody(
@@ -259,16 +334,19 @@ export async function handleSummarizeRequest(
   return successResponse(summary);
 }
 
-export default {
-  async fetch(request: Request): Promise<Response> {
-    try {
-      return await handleSummarizeRequest(
-        request,
-        process.env.HUGGING_FACE_API_TOKEN,
-      );
-    } catch (error: unknown) {
-      console.error("Unhandled summarization function error", error);
-      return errorResponse(500, invocationFailure);
-    }
-  },
-};
+export default async function summarize(
+  request: VercelRequest,
+  response: VercelResponse,
+): Promise<void> {
+  try {
+    const webRequest = toWebRequest(request);
+    const webResponse = await handleSummarizeRequest(
+      webRequest,
+      process.env.HUGGING_FACE_API_TOKEN,
+    );
+    await writeNodeResponse(webResponse, response);
+  } catch (error: unknown) {
+    console.error("Unhandled summarization function error", error);
+    writeInvocationFailure(response);
+  }
+}

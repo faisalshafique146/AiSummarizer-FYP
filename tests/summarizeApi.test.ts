@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   MAX_SUMMARIZE_TEXT_LENGTH,
   MIN_SUMMARIZE_WORD_COUNT,
@@ -25,35 +26,35 @@ afterEach(() => {
 });
 
 describe("summarize API handler", () => {
-  it("exposes the Web Handler entry point expected by Vercel", async () => {
-    vi.stubEnv("HUGGING_FACE_API_TOKEN", "");
+  it("serves JSON through the Node handler expected by Vercel's Vite runtime", async () => {
+    expect(vercelHandler).toBeTypeOf("function");
 
-    const response = await vercelHandler.fetch(postRequest({ text: validSource }));
-    const payload: unknown = await response.json();
-
-    expect(response.status).toBe(503);
-    expect(payload).toMatchObject({
-      ok: false,
-      error: { code: "SERVER_CONFIGURATION", retryable: false },
-    });
-  });
-
-  it("normalizes unhandled function failures instead of returning platform HTML", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const request = postRequest({ text: validSource });
-    Object.defineProperty(request, "method", {
-      get() {
-        throw new Error("unexpected invocation failure");
+    const request = {
+      headers: { host: "localhost" },
+      method: "GET",
+      url: "/api/summarize",
+    } as VercelRequest;
+    const responseHeaders = new Headers();
+    let responseBody = Buffer.alloc(0);
+    const response = {
+      setHeader(name: string, value: number | string | readonly string[]) {
+        responseHeaders.set(name, String(value));
+        return this;
       },
-    });
+      end(chunk?: Uint8Array) {
+        responseBody = chunk ? Buffer.from(chunk) : Buffer.alloc(0);
+        return this;
+      },
+      statusCode: 200,
+    } as unknown as VercelResponse;
 
-    const response = await vercelHandler.fetch(request);
-    const payload: unknown = await response.json();
+    await vercelHandler(request, response);
 
-    expect(response.status).toBe(500);
-    expect(payload).toMatchObject({
+    expect(response.statusCode).toBe(405);
+    expect(responseHeaders.get("content-type")).toContain("application/json");
+    expect(JSON.parse(responseBody.toString("utf8"))).toMatchObject({
       ok: false,
-      error: { code: "UPSTREAM_FAILURE", retryable: true },
+      error: { code: "METHOD_NOT_ALLOWED" },
     });
   });
 

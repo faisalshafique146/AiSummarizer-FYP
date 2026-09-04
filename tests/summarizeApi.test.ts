@@ -5,7 +5,7 @@ import {
   MAX_SUMMARIZE_TEXT_LENGTH,
   MIN_SUMMARIZE_WORD_COUNT,
 } from "../src/features/summarizer/types.ts";
-import { handleSummarizeRequest } from "../api/summarize.ts";
+import vercelHandler, { handleSummarizeRequest } from "../api/summarize.ts";
 
 const validSource = Array.from(
   { length: MIN_SUMMARIZE_WORD_COUNT },
@@ -25,6 +25,19 @@ afterEach(() => {
 });
 
 describe("summarize API handler", () => {
+  it("exposes the Web Handler entry point expected by Vercel", async () => {
+    vi.stubEnv("HUGGING_FACE_API_TOKEN", "");
+
+    const response = await vercelHandler.fetch(postRequest({ text: validSource }));
+    const payload: unknown = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload).toMatchObject({
+      ok: false,
+      error: { code: "SERVER_CONFIGURATION", retryable: false },
+    });
+  });
+
   it("rejects whitespace-only input before calling the provider", async () => {
     const fetchMock = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", fetchMock);

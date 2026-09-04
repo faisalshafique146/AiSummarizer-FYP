@@ -11,12 +11,8 @@ import Button from "../../components/ui/Button";
 import Panel from "../../components/ui/Panel";
 import Textarea from "../../components/ui/Textarea";
 import Toast from "../../components/ui/Toast";
-import { summarizeText } from "./summarizationService";
-import {
-  MAX_SUMMARIZE_TEXT_LENGTH,
-  SummarizationError,
-  type SummarizeError,
-} from "./types";
+import { MAX_SUMMARIZE_TEXT_LENGTH } from "./types";
+import { useSummarizer } from "./useSummarizer";
 
 interface ToastState {
   message: string;
@@ -56,18 +52,26 @@ function SummarySkeleton() {
 }
 
 function SummarizerWorkspace() {
-  const [inputValue, setInputValue] = useState("");
-  const [outputValue, setOutputValue] = useState("");
-  const [isFetching, setIsFetching] = useState(false);
-  const [summaryError, setSummaryError] = useState<SummarizeError | null>(null);
+  const {
+    cancel,
+    clear,
+    input,
+    isSubmitting,
+    requestState,
+    setInput,
+    submit,
+    summary,
+  } = useSummarizer();
   const [toast, setToast] = useState<ToastState | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const inputWords = countWords(inputValue);
-  const outputWords = countWords(outputValue);
-  const remainingCharacters = MAX_SUMMARIZE_TEXT_LENGTH - inputValue.length;
+  const inputWords = countWords(input);
+  const outputWords = countWords(summary);
+  const remainingCharacters = MAX_SUMMARIZE_TEXT_LENGTH - input.length;
   const isNearLimit = remainingCharacters <= 1_000;
-  const canSubmit = inputValue.trim().length > 0 && !isFetching;
+  const validationError =
+    requestState.status === "validation-error" ? requestState.error : null;
+  const apiError = requestState.status === "api-error" ? requestState.error : null;
 
   useEffect(() => {
     if (!toast) {
@@ -83,55 +87,40 @@ function SummarizerWorkspace() {
   }, [toast]);
 
   const handleInputChange: ChangeEventHandler<HTMLTextAreaElement> = (event) => {
-    setInputValue(event.target.value);
-    setSummaryError(null);
-  };
-
-  const generateSummary = async (): Promise<void> => {
-    try {
-      setIsFetching(true);
-      setSummaryError(null);
-      setOutputValue("");
-      setOutputValue(await summarizeText(inputValue));
-    } catch (error: unknown) {
-      setSummaryError(
-        error instanceof SummarizationError
-          ? error.details
-          : {
-              code: "UPSTREAM_FAILURE",
-              message: "Something went wrong while generating the summary.",
-              retryable: true,
-            },
-      );
-    } finally {
-      setIsFetching(false);
-    }
+    setInput(event.target.value);
   };
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-    if (canSubmit) {
-      void generateSummary();
-    }
+    void submit();
   };
 
   const handleShortcut: KeyboardEventHandler<HTMLTextAreaElement> = (event) => {
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && canSubmit) {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
       event.preventDefault();
-      void generateSummary();
+      void submit();
     }
   };
 
   const resetWorkspace = (): void => {
-    setInputValue("");
-    setOutputValue("");
-    setSummaryError(null);
+    clear();
     inputRef.current?.focus();
+  };
+
+  const cancelRequest = (): void => {
+    cancel();
+    window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   };
 
   const copyOutput = async (): Promise<void> => {
     try {
-      await navigator.clipboard.writeText(outputValue);
+      if (!summary) {
+        return;
+      }
+
+      await navigator.clipboard.writeText(summary);
       setToast({ message: "Summary copied to your clipboard.", tone: "success" });
     } catch {
       setToast({
@@ -161,10 +150,10 @@ function SummarizerWorkspace() {
                   Paste an article, report, or passage to condense.
                 </p>
               </div>
-              {inputValue ? (
+              {input ? (
                 <Button
                   className="-mr-2"
-                  disabled={isFetching}
+                  disabled={isSubmitting}
                   onClick={resetWorkspace}
                   size="sm"
                   variant="ghost"
@@ -178,17 +167,28 @@ function SummarizerWorkspace() {
               Text to summarize
             </label>
             <Textarea
-              aria-describedby="source-text-meta"
+              aria-describedby={
+                validationError
+                  ? "source-text-meta source-text-error"
+                  : "source-text-meta"
+              }
+              aria-invalid={Boolean(validationError)}
               className="mt-5 min-h-64 resize-y border-slate-200 bg-[#f6f7f8] p-4 focus-visible:bg-white focus-visible:ring-2 sm:min-h-72 sm:p-5 lg:min-h-80 lg:flex-1 lg:resize-none"
-              disabled={isFetching}
+              disabled={isSubmitting}
               id="source-text"
               maxLength={MAX_SUMMARIZE_TEXT_LENGTH}
               onChange={handleInputChange}
               onKeyDown={handleShortcut}
               placeholder="Paste the full text you want to summarize here..."
               ref={inputRef}
-              value={inputValue}
+              value={input}
             />
+
+            {validationError ? (
+              <p className="mt-3 text-sm font-medium text-red-700" id="source-text-error" role="alert">
+                {validationError.message}
+              </p>
+            ) : null}
 
             <div
               className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500"
@@ -203,7 +203,7 @@ function SummarizerWorkspace() {
                 </span>
               ) : (
                 <span>
-                  {inputValue.length.toLocaleString()} /{" "}
+                  {input.length.toLocaleString()} /{" "}
                   {MAX_SUMMARIZE_TEXT_LENGTH.toLocaleString()} characters
                 </span>
               )}
@@ -213,16 +213,27 @@ function SummarizerWorkspace() {
               <p className="text-xs text-slate-600">
                 Tip: press Ctrl/Command + Enter to generate
               </p>
-              <Button
-                className="w-full sm:w-auto"
-                disabled={!canSubmit}
-                isLoading={isFetching}
-                loadingLabel="Generating summary..."
-                size="lg"
-                type="submit"
-              >
-                Generate summary
-              </Button>
+              <div className="flex w-full gap-2 sm:w-auto">
+                {isSubmitting ? (
+                  <Button
+                    className="shrink-0"
+                    onClick={cancelRequest}
+                    size="lg"
+                    variant="secondary"
+                  >
+                    Cancel
+                  </Button>
+                ) : null}
+                <Button
+                  className="min-w-0 flex-1 sm:flex-none"
+                  isLoading={isSubmitting}
+                  loadingLabel="Generating summary..."
+                  size="lg"
+                  type="submit"
+                >
+                  Generate summary
+                </Button>
+              </div>
             </div>
           </section>
 
@@ -242,25 +253,28 @@ function SummarizerWorkspace() {
                   Review the result before copying or starting again.
                 </p>
               </div>
-              {outputValue ? (
-                <Button onClick={() => void copyOutput()} size="sm" variant="secondary">
-                  <CopyIcon />
-                  Copy
-                </Button>
-              ) : null}
+              <Button
+                disabled={!summary || isSubmitting}
+                onClick={() => void copyOutput()}
+                size="sm"
+                variant="secondary"
+              >
+                <CopyIcon />
+                Copy
+              </Button>
             </div>
 
             <div className="mt-5 flex min-h-64 min-w-0 flex-1 flex-col rounded-md border border-slate-300 bg-white p-5 sm:min-h-72 sm:p-6 lg:min-h-80">
-              {isFetching ? <SummarySkeleton /> : null}
+              {isSubmitting ? <SummarySkeleton /> : null}
 
-              {!isFetching && summaryError ? (
+              {!isSubmitting && apiError ? (
                 <div className="my-auto">
                   <Alert title="We could not generate a summary">
-                    <p>{summaryError.message}</p>
-                    {summaryError.retryable ? (
+                    <p>{apiError.message}</p>
+                    {apiError.retryable ? (
                       <Button
                         className="mt-4"
-                        onClick={() => void generateSummary()}
+                        onClick={() => void submit()}
                         size="sm"
                         variant="secondary"
                       >
@@ -271,18 +285,18 @@ function SummarizerWorkspace() {
                 </div>
               ) : null}
 
-              {!isFetching && !summaryError && outputValue ? (
+              {!isSubmitting && summary ? (
                 <>
                   <p className="sr-only" role="status">
                     Summary generated. {outputWords.toLocaleString()} {outputWords === 1 ? "word" : "words"}.
                   </p>
                   <article className="break-words whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
-                    {outputValue}
+                    {summary}
                   </article>
                 </>
               ) : null}
 
-              {!isFetching && !summaryError && !outputValue ? (
+              {!isSubmitting && !apiError && !summary ? (
                 <div className="my-auto max-w-sm py-12">
                   <span className="block h-0.5 w-10 bg-blue-600" aria-hidden="true" />
                   <p className="mt-5 text-lg font-semibold tracking-tight text-slate-900">
@@ -297,7 +311,7 @@ function SummarizerWorkspace() {
             </div>
 
             <div className="mt-4 flex min-h-10 flex-wrap items-center justify-between gap-3">
-              {outputValue ? (
+              {summary ? (
                 <span className="text-xs text-slate-500">
                   {outputWords.toLocaleString()} {outputWords === 1 ? "word" : "words"}{" "}
                   in summary
@@ -305,7 +319,7 @@ function SummarizerWorkspace() {
               ) : (
                 <span aria-hidden="true" />
               )}
-              {outputValue ? (
+              {summary ? (
                 <Button onClick={resetWorkspace} size="sm" variant="ghost">
                   Start another summary
                 </Button>

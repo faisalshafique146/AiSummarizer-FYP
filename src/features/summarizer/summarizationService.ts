@@ -85,7 +85,10 @@ async function readResponse(response: Response): Promise<SummarizeResponse> {
   return payload;
 }
 
-export async function summarizeText(input: string): Promise<string> {
+export async function summarizeText(
+  input: string,
+  signal: AbortSignal,
+): Promise<string> {
   const text = input.trim();
 
   if (!text) {
@@ -109,8 +112,13 @@ export async function summarizeText(input: string): Promise<string> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(request),
+      signal,
     });
   } catch (error: unknown) {
+    if (signal.aborted) {
+      throw error;
+    }
+
     throw createClientError(
       "NETWORK_FAILURE",
       "Unable to reach the summarization service. Try again.",

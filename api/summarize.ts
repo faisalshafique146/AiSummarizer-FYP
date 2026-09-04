@@ -1,12 +1,38 @@
-import {
-  type SummarizeError,
-  type SummarizeRequest,
-  type SummarizeResponse,
-} from "../src/features/summarizer/types.ts";
-import {
-  countWords,
-  validateSummarizeText,
-} from "../src/features/summarizer/validation.ts";
+// Keep this function self-contained. Vercel compiles files in `api/` separately
+// from the Vite client, so runtime imports from `src/` can make the function
+// fail during cold start before its request-level error handling can run.
+const maximumTextLength = 12_000;
+const minimumWordCount = 30;
+
+type SummarizeErrorCode =
+  | "EMPTY_TEXT"
+  | "INPUT_TOO_SHORT"
+  | "INPUT_TOO_LARGE"
+  | "INVALID_REQUEST"
+  | "METHOD_NOT_ALLOWED"
+  | "MODEL_UNAVAILABLE"
+  | "RATE_LIMITED"
+  | "SERVER_CONFIGURATION"
+  | "UNUSABLE_SUMMARY"
+  | "UPSTREAM_FAILURE";
+
+interface SummarizeError {
+  code: SummarizeErrorCode;
+  message: string;
+  retryable: boolean;
+}
+
+interface SummarizeRequest {
+  text: string;
+}
+
+type SummarizeResponse =
+  | { ok: true; summary: string }
+  | { ok: false; error: SummarizeError };
+
+type SummarizeTextValidation =
+  | { valid: true; text: string }
+  | { valid: false; error: SummarizeError };
 
 const modelEndpoint =
   "https://router.huggingface.co/hf-inference/models/sshleifer/distilbart-cnn-12-6";
@@ -21,6 +47,50 @@ const invocationFailure: SummarizeError = {
   message: "The summarization service could not process the request.",
   retryable: true,
 };
+
+function countWords(value: string): number {
+  const trimmedValue = value.trim();
+  return trimmedValue ? trimmedValue.split(/\s+/u).length : 0;
+}
+
+function validateSummarizeText(input: string): SummarizeTextValidation {
+  const text = input.trim();
+
+  if (!text) {
+    return {
+      valid: false,
+      error: {
+        code: "EMPTY_TEXT",
+        message: "Enter text to summarize.",
+        retryable: false,
+      },
+    };
+  }
+
+  if (text.length > maximumTextLength) {
+    return {
+      valid: false,
+      error: {
+        code: "INPUT_TOO_LARGE",
+        message: `Text must be ${maximumTextLength.toLocaleString()} characters or fewer.`,
+        retryable: false,
+      },
+    };
+  }
+
+  if (countWords(text) < minimumWordCount) {
+    return {
+      valid: false,
+      error: {
+        code: "INPUT_TOO_SHORT",
+        message: `Add at least ${minimumWordCount.toLocaleString()} words so there is enough source material to summarize.`,
+        retryable: false,
+      },
+    };
+  }
+
+  return { valid: true, text };
+}
 
 function getMaximumSummaryTokens(text: string): number {
   const proportionalLimit = Math.floor(countWords(text) * 0.45);

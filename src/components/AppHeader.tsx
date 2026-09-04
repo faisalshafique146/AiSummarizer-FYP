@@ -1,8 +1,15 @@
 import { useState, type MouseEventHandler } from "react";
 import { Link } from "react-router";
-import { logo } from "../assets";
 import { getAuthErrorMessage } from "../features/auth/authErrors";
 import { useAuth } from "../features/auth/useAuth";
+import Brand from "./Brand";
+import Button from "./ui/Button";
+import { buttonStyles } from "./ui/buttonStyles";
+import Toast from "./ui/Toast";
+
+function getInitial(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || "H";
+}
 
 function AppHeader() {
   const { user, loading, signOut } = useAuth();
@@ -26,52 +33,93 @@ function AppHeader() {
     void submitSignOut();
   };
 
+  const identity = user?.displayName ?? user?.email ?? "Account";
+
   return (
-    <header className="flex w-full flex-col items-center justify-center">
-      <nav className="mb-10 flex w-full items-center pt-3">
-        <Link to="/" aria-label="HiSumz home">
-          <img src={logo} alt="HiSumz logo" className="w-28 object-contain" />
-        </Link>
+    <>
+      <header className="border-b border-slate-300 bg-[#f8f8f6]">
+        <nav
+          aria-label="Primary navigation"
+          className="mx-auto flex h-16 w-full max-w-7xl items-center px-4 sm:px-6 lg:px-8"
+        >
+          <Link
+            aria-label="HiSumz home"
+            className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+            to="/"
+          >
+            <Brand />
+          </Link>
 
-        {!loading && !user && (
-          <>
-            <Link to="/sign-in" className="black_btn ml-auto">
-              Sign In
-            </Link>
-            <Link to="/sign-up" className="black_btn ml-2">
-              Sign Up
-            </Link>
-          </>
-        )}
-        {!loading && user && (
-          <div className="ml-auto flex items-center gap-3">
-            {signOutError ? (
-              <p className="text-sm text-red-800" role="alert">
-                {signOutError}
-              </p>
+          <div className="ml-auto flex items-center gap-2">
+            {loading ? (
+              <div
+                aria-label="Checking session"
+                className="h-9 w-28 animate-pulse rounded-md bg-slate-200"
+                role="status"
+              />
             ) : null}
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="black_btn disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSigningOut}
-              title={user.displayName ?? user.email ?? "Authenticated user"}
-            >
-              {isSigningOut ? "Signing Out…" : "Sign Out"}
-            </button>
-          </div>
-        )}
-      </nav>
 
-      <h1 className="head_text">
-        Summarize Articles with <br className="max-md:hidden" />
-        <span className="orange_gradient">HiSumz AI</span>
-      </h1>
-      <h2 className="desc">
-        Simplify your reading with HiSumz, an open-source article summarizer
-        that transforms lengthy articles into clear and concise summaries
-      </h2>
-    </header>
+            {!loading && !user ? (
+              <>
+                <Link
+                  className={buttonStyles({ variant: "ghost" })}
+                  to="/sign-in"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  className={buttonStyles({ variant: "primary" })}
+                  to="/sign-up"
+                >
+                  Create account
+                </Link>
+              </>
+            ) : null}
+
+            {!loading && user ? (
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="hidden text-right sm:block">
+                  <p className="max-w-44 truncate text-sm font-semibold text-slate-900">
+                    {identity}
+                  </p>
+                  {user.displayName && user.email ? (
+                    <p className="max-w-44 truncate text-xs text-slate-500">
+                      {user.email}
+                    </p>
+                  ) : null}
+                </div>
+                <span
+                  aria-hidden="true"
+                  className="flex size-9 items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-bold text-blue-700"
+                >
+                  {getInitial(identity)}
+                </span>
+                <Button
+                  aria-label="Sign out of HiSumz"
+                  isLoading={isSigningOut}
+                  loadingLabel="Signing out"
+                  onClick={handleSignOut}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Sign out
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </nav>
+      </header>
+
+      {signOutError ? (
+        <Toast
+          message={signOutError}
+          onDismiss={() => {
+            setSignOutError(null);
+          }}
+          tone="error"
+        />
+      ) : null}
+    </>
   );
 }
 

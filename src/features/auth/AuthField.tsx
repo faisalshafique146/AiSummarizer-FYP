@@ -1,4 +1,5 @@
 import type { UseFormRegisterReturn } from "react-hook-form";
+import Input from "../../components/ui/Input";
 
 interface AuthFieldProps {
   autoComplete: string;
@@ -28,30 +29,28 @@ function AuthField({
     .join(" ");
 
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-sm font-semibold text-gray-800" htmlFor={id}>
+    <div>
+      <label className="mb-2 block text-sm font-semibold text-slate-800" htmlFor={id}>
         {label}
       </label>
-      <input
+      <Input
         {...registration}
         aria-describedby={describedBy || undefined}
         aria-invalid={Boolean(error)}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
-        className={`rounded-lg border px-3 py-3 font-normal outline-none focus:border-gray-700 ${
-          error ? "border-red-700" : "border-gray-300"
-        }`}
+        className={error ? "border-red-500 focus:border-red-600 focus:ring-red-100" : ""}
         id={id}
         required
         type={type}
       />
       {hint ? (
-        <p className="text-xs text-gray-600" id={hintId}>
+        <p className="mt-2 text-xs leading-5 text-slate-500" id={hintId}>
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p className="text-sm text-red-800" id={errorId} role="alert">
+        <p className="mt-2 text-sm text-red-700" id={errorId} role="alert">
           {error}
         </p>
       ) : null}

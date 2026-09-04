@@ -137,7 +137,10 @@ function mapUpstreamFailure(response: Response): Response {
   });
 }
 
-async function handleRequest(request: Request): Promise<Response> {
+export async function handleSummarizeRequest(
+  request: Request,
+  tokenValue: string | undefined,
+): Promise<Response> {
   if (request.method !== "POST") {
     return errorResponse(
       405,
@@ -179,7 +182,7 @@ async function handleRequest(request: Request): Promise<Response> {
     return errorResponse(validation.status, validation.error);
   }
 
-  const token = process.env.HUGGING_FACE_API_TOKEN?.trim();
+  const token = tokenValue?.trim();
 
   if (!token) {
     return errorResponse(503, {
@@ -242,5 +245,10 @@ async function handleRequest(request: Request): Promise<Response> {
 }
 
 export default {
-  fetch: handleRequest,
+  fetch(request: Request) {
+    return handleSummarizeRequest(
+      request,
+      process.env.HUGGING_FACE_API_TOKEN,
+    );
+  },
 };

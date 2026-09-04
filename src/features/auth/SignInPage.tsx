@@ -2,13 +2,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { SubmitEventHandler } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router";
+import Alert from "../../components/ui/Alert";
+import Button from "../../components/ui/Button";
+import Spinner from "../../components/ui/Spinner";
 import { getAuthErrorMessage } from "./authErrors";
 import AuthField from "./AuthField";
 import AuthPageLayout from "./AuthPageLayout";
-import {
-  signInSchema,
-  type SignInFormValues,
-} from "./authSchemas";
+import { signInSchema, type SignInFormValues } from "./authSchemas";
 import { useAuth } from "./useAuth";
 
 function SignInPage() {
@@ -50,9 +50,10 @@ function SignInPage() {
         title="Checking your session"
         description="Please wait while HiSumz restores your account."
       >
-        <p className="mt-6 text-sm text-gray-700" role="status">
-          Loading&hellip;
-        </p>
+        <div className="mt-8 flex items-center gap-3 text-sm text-slate-600" role="status">
+          <Spinner />
+          Loading your account...
+        </div>
       </AuthPageLayout>
     );
   }
@@ -63,12 +64,12 @@ function SignInPage() {
 
   return (
     <AuthPageLayout
-      title="Sign In"
-      description="Enter your email and password to sign in."
+      title="Welcome back"
+      description="Sign in to open your summarizer workspace."
     >
       <form
         aria-busy={isSubmitting}
-        className="mt-6 flex flex-col gap-4"
+        className="mt-8 flex flex-col gap-5"
         noValidate
         onSubmit={handleFormSubmit}
       >
@@ -77,7 +78,7 @@ function SignInPage() {
           autoFocus
           error={errors.email?.message}
           id="sign-in-email"
-          label="Email"
+          label="Email address"
           registration={register("email")}
           type="email"
         />
@@ -89,22 +90,23 @@ function SignInPage() {
           registration={register("password")}
           type="password"
         />
-        {errors.root?.message ? (
-          <p className="text-sm text-red-800" role="alert">
-            {errors.root.message}
-          </p>
-        ) : null}
-        <button
-          className="rounded-lg bg-linear-to-r from-gray-900 to-gray-700 px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={isSubmitting}
+        {errors.root?.message ? <Alert>{errors.root.message}</Alert> : null}
+        <Button
+          className="mt-1 w-full"
+          isLoading={isSubmitting}
+          loadingLabel="Signing in..."
+          size="lg"
           type="submit"
         >
-          {isSubmitting ? "Signing In…" : "Sign In"}
-        </button>
-        <p className="text-center text-sm text-gray-700">
-          Don&apos;t have an account?
-          <Link to="/sign-up" className="ml-1 font-bold text-gray-900">
-            Sign up
+          Sign in
+        </Button>
+        <p className="text-center text-sm text-slate-600">
+          New to HiSumz?{" "}
+          <Link
+            className="font-semibold text-blue-700 hover:text-blue-800 hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            to="/sign-up"
+          >
+            Create an account
           </Link>
         </p>
       </form>

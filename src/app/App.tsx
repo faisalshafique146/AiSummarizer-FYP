@@ -7,6 +7,9 @@ import "../App.css";
 function App() {
   return (
     <BrowserRouter>
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/sign-in" element={<SignInPage />} />

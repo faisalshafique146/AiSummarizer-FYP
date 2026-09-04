@@ -1,33 +1,62 @@
 import AppHeader from "../components/AppHeader";
+import SignedOutLanding from "../components/SignedOutLanding";
+import Panel from "../components/ui/Panel";
 import { useAuth } from "../features/auth/useAuth";
 import SummarizerWorkspace from "../features/summarizer/SummarizerWorkspace";
+
+function WorkspaceLoadingState() {
+  return (
+    <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="h-5 w-32 animate-pulse rounded bg-slate-200" />
+      <div className="mt-5 h-10 w-full max-w-lg animate-pulse rounded-lg bg-slate-200" />
+      <div className="mt-3 h-6 w-full max-w-2xl animate-pulse rounded bg-slate-100" />
+      <Panel className="mt-10 grid min-h-[520px] animate-pulse gap-px overflow-hidden bg-slate-200 lg:grid-cols-2">
+        <div className="bg-white" />
+        <div className="bg-slate-50" />
+      </Panel>
+      <span className="sr-only" role="status">
+        Checking your session
+      </span>
+    </div>
+  );
+}
 
 function HomePage() {
   const { user, loading } = useAuth();
 
   return (
-    <main>
-      <div className="main" aria-hidden="true">
-        <div className="gradient" />
-      </div>
-      <div className="app">
-        <AppHeader />
-        {loading ? (
-          <p
-            className="h-[600px] pt-9 text-2xl font-semibold text-gray-700"
-            role="status"
-          >
-            Checking your session…
-          </p>
-        ) : user ? (
-          <SummarizerWorkspace />
-        ) : (
-          <p className="orange_gradient h-[600px] pt-9 text-5xl font-bold">
-            Please Sign in To Summarize
-          </p>
-        )}
-      </div>
-    </main>
+    <div className="min-h-screen bg-[#f8f8f6] text-slate-950">
+      <AppHeader />
+      <main id="main-content">
+        {loading ? <WorkspaceLoadingState /> : null}
+        {!loading && !user ? <SignedOutLanding /> : null}
+        {!loading && user ? (
+          <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+            <section className="max-w-3xl border-l-2 border-blue-600 pl-5 sm:pl-6">
+              <p className="font-mono text-xs tracking-[0.14em] text-blue-700 uppercase">
+                Workspace / New summary
+              </p>
+              <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+                Create a new summary.
+              </h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+                Paste the source on the left. Your summary will stay beside it
+                for an easier review.
+              </p>
+            </section>
+            <div className="mt-8 sm:mt-10">
+              <SummarizerWorkspace />
+            </div>
+          </div>
+        ) : null}
+      </main>
+      <footer className="border-t border-slate-300 bg-[#f8f8f6]">
+        <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 text-sm text-slate-500 sm:px-6 lg:px-8">
+          <p>HiSumz / Text summarizer</p>
+          <p className="hidden font-mono text-xs tracking-wide sm:block">ONE TASK. NO CLUTTER.</p>
+        </div>
+      </footer>
+    </div>
   );
 }
 

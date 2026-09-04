@@ -4,7 +4,7 @@ HiSumz AI is a TypeScript and React application that summarizes pasted text with
 
 ## Local setup
 
-Requirements: Node.js 20.19 or newer and npm. The Vercel CLI is also required to run the complete application locally because Vite alone does not execute files in `api/`.
+Requirements: Node.js 20.19 or newer and npm.
 
 1. Install the locked dependencies:
 
@@ -14,14 +14,13 @@ Requirements: Node.js 20.19 or newer and npm. The Vercel CLI is also required to
 
 2. Copy `.env.example` to `.env.local` and replace every placeholder. The four `VITE_FIREBASE_*` values are public Firebase web-app configuration. `HUGGING_FACE_API_TOKEN` is a private server credential and must never have a `VITE_` prefix.
 
-3. Link the directory to its Vercel project when needed, then start the full local application:
+3. Start the application:
 
    ```bash
-   npx vercel link
-   npx vercel dev
+   npm run dev
    ```
 
-`npm run dev` remains useful for frontend-only work, but summarization calls will not work because the Vite server does not run the Vercel Function.
+The Vite development configuration serves `/api/summarize` through the same validated handler used by the deployed Vercel Function. The private token is loaded into the development server only and is not added to the browser environment. To test Vercel's complete local runtime instead, link the project with `npx vercel link` and run `npx vercel dev`.
 
 ## Environment and deployment
 
@@ -43,8 +42,8 @@ If a Hugging Face token was previously deployed as `VITE_HUGGING_FACE_API_TOKEN`
 
 ## Available commands
 
-- `npm run dev` starts the frontend-only Vite development server.
-- `npx vercel dev` starts Vite and the `/api/summarize` Vercel Function together.
+- `npm run dev` starts Vite with a server-only local `/api/summarize` handler.
+- `npx vercel dev` runs the project through Vercel's local runtime when provider-level testing is needed.
 - `npm run typecheck` runs the strict TypeScript project build without emitting files.
 - `npm run lint` runs type-aware ESLint checks over the TypeScript source.
 - `npm run build` creates the production bundle in `dist/`.
